@@ -1,3 +1,4 @@
+open GraphDataTypes;
 
 let floatToPrecision = (number: float, precision: int) => {
     let floatString = Js.Float.toFixedWithPrecision(number, ~digits=precision);
@@ -26,8 +27,10 @@ let getDateStr = (~separateStr="/", date:float) => {
 let pointFromPercent = (~startPoint, ~length, ~isX=false, percent) => startPoint +. ((length /. 100.) *. (isX ? percent : (100. -. percent)));
 let percentOfData = (~data, ~maxValue) => (maxValue === 0. ? 0. : (data /. maxValue) *. 100.);
 
-let sortDatetimeLineGraph = (lineGraphDatas) => {
-  ()
+let sortDatetimeLineGraph = (lineGraphDatas:list(lineGraph)) => {
+  lineGraphDatas |> List.map((lineGraphData) => {
+    ()
+  });
 };
 
 let lastPoint = (values, points, maxX) => {
