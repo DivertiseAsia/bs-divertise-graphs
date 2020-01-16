@@ -6,7 +6,7 @@ let svgWidth = 1000;
 let svgHeight = 500;
 
 let minX = 100.;
-let maxX = 950.;
+let maxX = 900.;
 let minY = 50.;
 let maxY = 400.;
 
@@ -79,7 +79,7 @@ let make = (
     ~maxYvalue=10.,
     ~minYvalue=-10.,
     ~target:string="", 
-    ~timeLimit:timeRange=AllTime,
+    ~timeRange=AllTime,
     ~fontColor="black",
     ~showLines=false, 
     ~showPoints=true,
@@ -90,31 +90,29 @@ let make = (
     ~showLineCenter=true,
     ~borderColor="black",
     ~floatDigit=2,
-    ~fontSize=20.0,
+    ~fontSize=15.0,
+    ~xRange=9,
     ~onMouseMove=(_ => ()),
     ~onMouseEnter=(_ => ()),
     ~onMouseLeave=(_ => ())
   ) => {
 
-  let (minXvalue, maxXvalue, lineYAmount) = switch (timeLimit) {
-  | OneMonth => (filterByMonth(1), Js.Date.now(), 30)
-  | TwoMonths => (filterByMonth(2), Js.Date.now(), 2)
-  | ThreeMonths => (filterByMonth(3), Js.Date.now(), 3)
-  | FourMonths => (filterByMonth(4), Js.Date.now(), 4)
-  | FiveMonths => (filterByMonth(5), Js.Date.now(), 5)
-  | SixMonths => (filterByMonth(6), Js.Date.now(), 6)
-  | SevenMonths => (filterByMonth(7), Js.Date.now(), 7)
-  | EightMonths => (filterByMonth(8), Js.Date.now(), 8)
-  | NineMonths => (filterByMonth(9), Js.Date.now(), 9)
-  | TenMonths => (filterByMonth(10), Js.Date.now(), 10)
-  | ElevenMonths => (filterByMonth(11), Js.Date.now(), 11)
-  | OneYear => (filterByYear(1), Js.Date.now(), 12)
-  | AllTime => (findMaxAndMinTime(~findMax=false, datas), findMaxAndMinTime(~findMax=true, datas), 0)
+  let (minXvalue, maxXvalue) = switch (timeRange) {
+  | OneMonth => (filterByMonth(1), Js.Date.now())
+  | TwoMonths => (filterByMonth(2), Js.Date.now())
+  | ThreeMonths => (filterByMonth(3), Js.Date.now())
+  | FourMonths => (filterByMonth(4), Js.Date.now())
+  | FiveMonths => (filterByMonth(5), Js.Date.now())
+  | SixMonths => (filterByMonth(6), Js.Date.now())
+  | SevenMonths => (filterByMonth(7), Js.Date.now())
+  | EightMonths => (filterByMonth(8), Js.Date.now())
+  | NineMonths => (filterByMonth(9), Js.Date.now())
+  | TenMonths => (filterByMonth(10), Js.Date.now())
+  | ElevenMonths => (filterByMonth(11), Js.Date.now())
+  | OneYear => (filterByYear(1), Js.Date.now())
+  | AllTime => (findMaxAndMinTime(~findMax=false, datas), findMaxAndMinTime(~findMax=true, datas))
   };
 
-  let dateStart = getDateStr(minXvalue, "/");
-  let dateMiddle = getDateStr(minXvalue +. ((maxXvalue -. minXvalue) /. 2.), "/");
-  let dateEnd = getDateStr(maxXvalue, "/");
   let tooltipId = "tooltip-" ++ svgId;
   let circleId = "circle-" ++ svgId;
   let yValueLength = Js.Math.abs_float(minYvalue -. maxYvalue);
@@ -148,7 +146,7 @@ let make = (
   <div className="svg-line-graph">
     <svg id=svgId viewBox preserveAspectRatio="xMinYMin meet" className="svg-content" onMouseMove onMouseEnter onMouseLeave>
       {
-        getXAxisAsTimes(timeLimit) 
+        getXAxisAsTimes(timeRange) 
         |> List.filter(time => time >= minXvalue && time <= maxXvalue) 
         |> List.mapi((i, time) => {
           let x = floatToPrecision(
@@ -222,39 +220,17 @@ let make = (
       </text>
       {
         <g>
-          <text 
-            x=floatToPrecision(minX, 2)
-            y=floatToPrecision(maxY +. 50., 2)
-            fill=fontColor
-            fontSize="30px"
-          >
-            {string((dateStart === "NaN/NaN/NaN" ? "" : dateStart))}
-          </text>
-          <text 
-            x=floatToPrecision(minX +. ((maxX -. minX) /. 2.) -. 60., 2)
-            y=floatToPrecision(maxY +. 50., 2)
-            fill=fontColor
-            fontSize="30px"
-          >
-            {string((dateStart === "NaN/NaN/NaN" ? "" : dateMiddle))}
-          </text>
-          <text 
-            x=floatToPrecision(maxX -. 150., 2)
-            y=floatToPrecision(maxY +. 50., 2)
-            fill=fontColor
-            fontSize="30px"
-          >
-            {string((dateStart === "NaN/NaN/NaN" ? "" : dateEnd))}
-          </text>
+          {drawXvaluesStr(
+            ~minX, ~maxX, ~maxY, ~fontColor, ~fontSize, 
+            ~dateStart=minXvalue, ~dateEnd=maxXvalue, 
+            ~range=(xRange < 2 ? 1 : (xRange - 1)))}
           {showLines ?
             <>
-            {
-              datas 
+            {datas 
               |> List.filter((t:lineGraph) => t.title !== target)
               |> drawLines(~maxXvalue, ~minXvalue, ~target, ~yValueLength)
             }
-            {
-              datas 
+            {datas 
               |> List.filter((t:lineGraph) => t.title === target)
               |> drawLines(~maxXvalue, ~minXvalue, ~target, ~yValueLength)
             }

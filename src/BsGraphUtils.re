@@ -12,7 +12,7 @@ let floatToPrecision = (number: float, precision: int) => {
     result;
 };
 
-let getDateStr = (date:float, separateStr) => {
+let getDateStr = (~separateStr="/", date:float) => {
   let dateType = Js.Date.fromFloat(date);
   (((Js.Date.getMonth(dateType) +. 1.)) >= 10. ? 
     ((Js.Date.getMonth(dateType) +. 1.) |> Js.Float.toString) 
@@ -25,6 +25,10 @@ let getDateStr = (date:float, separateStr) => {
 
 let pointFromPercent = (~startPoint, ~length, ~isX=false, percent) => startPoint +. ((length /. 100.) *. (isX ? percent : (100. -. percent)));
 let percentOfData = (~data, ~maxValue) => (maxValue === 0. ? 0. : (data /. maxValue) *. 100.);
+
+let sortDatetimeLineGraph = (lineGraphDatas) => {
+  ()
+};
 
 let lastPoint = (values, points, maxX) => {
     (List.length(values) === 1 ?
@@ -93,10 +97,10 @@ let drawGuildLineX = (~lineAmount=20, ~minX, ~maxX, ~minY, ~maxY, ~strokeColor) 
         *. (i |> float_of_int);
       Js.Array.push(
         <line
-          x1={Utils.floatToPrecision(minX, 2)}
-          y1={Utils.floatToPrecision(y, 2)}
-          x2={Utils.floatToPrecision(maxX, 2)}
-          y2={Utils.floatToPrecision(y, 2)}
+          x1={floatToPrecision(minX, 2)}
+          y1={floatToPrecision(y, 2)}
+          x2={floatToPrecision(maxX, 2)}
+          y2={floatToPrecision(y, 2)}
           strokeWidth="0.5"
           stroke=strokeColor
         />,
@@ -105,6 +109,33 @@ let drawGuildLineX = (~lineAmount=20, ~minX, ~maxX, ~minY, ~maxY, ~strokeColor) 
       |> ignore;
     };
     lines |> ReasonReact.array;
+};
+
+let drawXvaluesStr = (~minX, ~maxX, ~maxY, ~fontColor, ~fontSize=30., ~dateStart:float, ~dateEnd:float, ~range) => {
+  let yValues = [||];
+  for (i in range downto 0) {
+    let dateStr = (dateStart +. (((dateEnd -. dateStart) /. (range |> float_of_int)) *. (i |> float_of_int))) |> getDateStr;
+    let x =
+      (minX
+      +. (maxX -. minX)
+      /. (range |> float_of_int)
+      *. (i |> float_of_int))  -. fontSize -. 
+      ((Js.String.length(dateStr) |> float_of_int) *. (fontSize /. 6.5));
+    
+    Js.Array.push(
+      <text 
+        x=floatToPrecision(x, 2)
+        y=floatToPrecision(maxY +.  (fontSize *. 2.), 2)
+        fill=fontColor
+        fontSize=(floatToPrecision(fontSize, 2)++"px")
+      >
+        {ReasonReact.string(dateStr)}
+      </text>,
+      yValues,
+    )
+    |> ignore;
+  };
+  yValues |> ReasonReact.array;
 };
 
 let hideTooltip: (string, string) => unit = [%bs.raw
