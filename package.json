@@ -1,0 +1,33 @@
+{
+  "name": "@divertiseasia/bs-divertise-graphs",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "bsb -make-world",
+    "start": "bsb -make-world -w",
+    "server": "webpack-dev-server --open --host 0.0.0.0 --port 8080 --public localhost:8080",
+    "clean": "bsb -clean-world",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "BuckleScript",
+    "Reason",
+    "Components"
+  ],
+  "homepage": "https://github.com/DivertiseAsia/bs-divertise-graphs",
+  "repository": "https://github.com/DivertiseAsia/bs-divertise-graphs",
+  "bugs": "https://github.com/DivertiseAsia/bs-divertise-graphs",
+  "author": "Divertise Asia Co., Ltd.",
+  "license": "MIT",
+  "dependencies": {
+    "react": ">=16.8.1",
+    "react-dom": ">=16.8.1",
+    "reason-react": "^v0.7.0"
+  },
+  "devDependencies": {
+    "bs-platform": "5.0.3",
+    "webpack": "^4.0.1",
+    "webpack-cli": "^3.1.1",
+    "webpack-dev-server": "^3.1.8",
+    "webpack-merge": "^4.1.4"
+  }
+}
