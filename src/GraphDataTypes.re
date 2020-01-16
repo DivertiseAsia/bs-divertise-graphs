@@ -1,6 +1,15 @@
-type timelimits =
+type timeRange =
   | OneMonth
+  | TwoMonths
   | ThreeMonths
+  | FourMonths
+  | FiveMonths
+  | SixMonths
+  | SevenMonths
+  | EightMonths
+  | NineMonths
+  | TenMonths
+  | ElevenMonths
   | OneYear
   | AllTime;
 

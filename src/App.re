@@ -78,9 +78,8 @@ let make = () => {
       values: values2,
     },
   ];
-    null
-  /*<LineGraph 
+  <LineGraph 
     svgId="line-graph" 
     datas
-  />*/
+  />
 };

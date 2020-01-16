@@ -79,7 +79,7 @@ let make = (
     ~maxYvalue=10.,
     ~minYvalue=-10.,
     ~target:string="", 
-    ~timeLimit:timelimits=AllTime,
+    ~timeLimit:timeRange=AllTime,
     ~fontColor="black",
     ~showLines=false, 
     ~showPoints=true,
@@ -98,7 +98,16 @@ let make = (
 
   let (minXvalue, maxXvalue, lineYAmount) = switch (timeLimit) {
   | OneMonth => (filterByMonth(1), Js.Date.now(), 30)
+  | TwoMonths => (filterByMonth(2), Js.Date.now(), 2)
   | ThreeMonths => (filterByMonth(3), Js.Date.now(), 3)
+  | FourMonths => (filterByMonth(4), Js.Date.now(), 4)
+  | FiveMonths => (filterByMonth(5), Js.Date.now(), 5)
+  | SixMonths => (filterByMonth(6), Js.Date.now(), 6)
+  | SevenMonths => (filterByMonth(7), Js.Date.now(), 7)
+  | EightMonths => (filterByMonth(8), Js.Date.now(), 8)
+  | NineMonths => (filterByMonth(9), Js.Date.now(), 9)
+  | TenMonths => (filterByMonth(10), Js.Date.now(), 10)
+  | ElevenMonths => (filterByMonth(11), Js.Date.now(), 11)
   | OneYear => (filterByYear(1), Js.Date.now(), 12)
   | AllTime => (findMaxAndMinTime(~findMax=false, datas), findMaxAndMinTime(~findMax=true, datas), 0)
   };
