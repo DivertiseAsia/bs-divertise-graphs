@@ -37,7 +37,7 @@ let make = () => {
     Some(() => Router.unwatchUrl(watcherID));
   });
 
-  let values1:list(valueLineGraph) = [
+  let values1:list(point) = [
     {
       x: Js.Date.now() -. 1500000000., /* timestamp */
       y: 8.4, /* value */
@@ -51,7 +51,7 @@ let make = () => {
       y: 6.1, /* value */
     },
   ];
-  let values2:list(valueLineGraph) = [
+  let values2:list(point) = [
     {
       x: Js.Date.now() -. 1500000000., /* timestamp */
       y: -5.7, /* value */
@@ -70,12 +70,12 @@ let make = () => {
     {
       title: "data1",
       color: "red",
-      values: values1,
+      points: values1,
     },
     {
       title: "data2",
       color: "blue",
-      values: values2,
+      points: values2,
     },
   ];
   <LineGraph 

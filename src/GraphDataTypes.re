@@ -13,7 +13,7 @@ type timeRange =
   | OneYear
   | AllTime;
 
-type valueLineGraph = {
+type point = {
     x: float, /* timestamp */
     y: float, /* value */
 };
@@ -21,5 +21,11 @@ type valueLineGraph = {
 type lineGraph = {
     title: string,
     color: string,
-    values: list(valueLineGraph),
+    points: list(point),
+};
+
+type categoryGraph = {
+  title: string,
+  color: string,
+  point,
 };

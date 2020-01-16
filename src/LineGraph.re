@@ -10,17 +10,17 @@ let maxX = 900.;
 let minY = 50.;
 let maxY = 400.;
 
-let calculatePoint = (~value:valueLineGraph, ~maxXvalue, ~minXvalue, point, yValueLength) => {
+let calculatePoint = (~dataPoint:point, ~maxXvalue, ~minXvalue, point, yValueLength) => {
   let axisX = floatToPrecision(
-                percentOfData(~data=(value.x -. minXvalue), ~maxValue=(maxXvalue -. minXvalue))
+                percentOfData(~data=(dataPoint.x -. minXvalue), ~maxValue=(maxXvalue -. minXvalue))
                 |> pointFromPercent(~startPoint=minX, ~length=(maxX -. minX), ~isX=true)
                 , 2
               );
 
   let axisY = percentOfData(
-                ~data=(value.y < 0. ? 
-                  (10. -. Js.Math.abs_float(value.y))
-                  : (value.y +. 10.)), 
+                ~data=(dataPoint.y < 0. ? 
+                  (10. -. Js.Math.abs_float(dataPoint.y))
+                  : (dataPoint.y +. 10.)), 
                 ~maxValue=yValueLength
               ) 
               |> pointFromPercent(~startPoint=minY, ~length=(maxY -. minY))
@@ -30,18 +30,17 @@ let calculatePoint = (~value:valueLineGraph, ~maxXvalue, ~minXvalue, point, yVal
 
 let findMaxAndMinTime = (~findMax=true, datas:list(lineGraph)) => {
   let allTime = datas |> List.map((data:lineGraph) => {
-    let times = data.values |> List.map((value:valueLineGraph) => {
-      value.x;
+    let times = data.points |> List.map((point:point) => {
+      point.x;
     });
     (findMax ? Js.Math.maxMany_float(times |> Array.of_list) : Js.Math.minMany_float(times |> Array.of_list));
   });
   (findMax ? Js.Math.maxMany_float(allTime |> Array.of_list) : Js.Math.minMany_float(allTime |> Array.of_list));
 };
 
-let filterValues = (values, minXvalue, maxXvalue) => values 
-      |> List.filter((value:valueLineGraph) => 
-        value.x >= minXvalue && value.x <= maxXvalue)
-
+let filterValues = (points, minXvalue, maxXvalue) => points 
+      |> List.filter((point:point) => 
+      point.x >= minXvalue && point.x <= maxXvalue)
 let drawLines = (~maxXvalue, ~minXvalue, ~target, ~yValueLength, datas:list(lineGraph)) => {
   datas |> List.mapi((index, data:lineGraph) => {
     <g 
@@ -49,11 +48,11 @@ let drawLines = (~maxXvalue, ~minXvalue, ~target, ~yValueLength, datas:list(line
     >
       {
         let points = [|""|];
-        filterValues(data.values, minXvalue, maxXvalue) 
-        |> List.mapi((i, value) => {
-          points[0] = calculatePoint(~value, ~maxXvalue, ~minXvalue, points[0], yValueLength);
-          if (i === List.length(data.values) - 1) {
-            points[0] = points[0] ++ lastPoint(data.values, points[0], maxX)
+        filterValues(data.points, minXvalue, maxXvalue) 
+        |> List.mapi((i, point) => {
+          points[0] = calculatePoint(~dataPoint=point, ~maxXvalue, ~minXvalue, points[0], yValueLength);
+          if (i === List.length(data.points) - 1) {
+            points[0] = points[0] ++ lastPoint(data.points, points[0], maxX)
           };
         }) |> ignore;
         (Array.length(points) === 1 && points[0] === "" ?
@@ -119,9 +118,9 @@ let make = (
 
   let tooltipDatas: array(array(array(float))) = 
     datas |> List.map((data:lineGraph) => {
-      filterValues(data.values, minXvalue, maxXvalue) |> List.map((value:valueLineGraph) => {
-        let point = calculatePoint(~value, ~maxXvalue, ~minXvalue, "", yValueLength) |> Js.String.split(",");
-        [|value.y, value.x, point[0] |> float_of_string, point[1] |> float_of_string|]
+      filterValues(data.points, minXvalue, maxXvalue) |> List.map((dataPoint:point) => {
+        let point = calculatePoint(~dataPoint, ~maxXvalue, ~minXvalue, "", yValueLength) |> Js.String.split(",");
+        [|dataPoint.y, dataPoint.x, point[0] |> float_of_string, point[1] |> float_of_string|]
       }) |> Array.of_list;
     }) |> Array.of_list;
   
