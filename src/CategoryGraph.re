@@ -124,7 +124,7 @@ let make = (
         x=floatToPrecision(boundary.positionPoints.minX -. 20., 2)
         y=(((boundary.positionPoints.maxY -. boundary.positionPoints.minY) /. 2. +. boundary.positionPoints.minY +. 7.) |> Js.Float.toString)
         fill=colorElements.font
-        fontSize="20px"
+        fontSize=(floatToPrecision(fontSize, 2)++"px")
         transform="translate(-210 340) scale(1) rotate(-90)"
       >
         {string(titleYAxis)}
