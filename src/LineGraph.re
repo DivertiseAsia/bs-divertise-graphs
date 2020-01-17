@@ -75,9 +75,9 @@ let make = (
     ~floatDigit=2,
     ~fontSize=15.0,
     ~xRange=9,
-    ~onMouseMove=(_ => ()),
-    ~onMouseEnter=(_ => ()),
-    ~onMouseLeave=(_ => ())
+    ~onMouseMove=((e, data) => ()),
+    ~onMouseEnter=((e, data) => ()),
+    ~onMouseLeave=((e, data) => ())
   ) => {
 
   let (minXvalue, maxXvalue) = switch (timeRange) {
@@ -109,8 +109,9 @@ let make = (
     }) |> Array.of_list;
   
   let pointElements = tooltipDatas |> Array.to_list |> List.mapi((index, tooltipData) => {
-    tooltipData |> Array.to_list |> List.map((data) => {
+    tooltipData |> Array.to_list |> List.mapi((i, data) => {
       <circle 
+        key=("circle-"++(i |> string_of_int)++"-"++svgId)
         cx=(data[2] |> Js.Float.toString) 
         cy=(data[3] |> Js.Float.toString) 
         r="4" 
@@ -133,8 +134,16 @@ let make = (
   let title:array(string) = datas |> List.map((data:lineGraph) => data.title) |> Array.of_list;
   let viewBox = ("0 0 " ++ (boundary.graphSize.width |> string_of_int) ++ " " ++ (boundary.graphSize.height |> string_of_int));
   <div className="svg-line-graph">
-    <svg id=svgId viewBox preserveAspectRatio="xMinYMin meet" className="svg-content" onMouseMove onMouseEnter onMouseLeave>
-      {
+    <svg 
+      id=svgId 
+      viewBox 
+      preserveAspectRatio="xMinYMin meet" 
+      className="svg-content" 
+      onMouseMove=(e => onMouseMove(e, tooltipDatas))
+      onMouseEnter=(e => onMouseEnter(e, tooltipDatas))
+      onMouseLeave=(e => onMouseLeave(e, tooltipDatas))
+    >
+      /*{
         getXAxisAsTimes(timeRange) 
         |> List.filter(time => time >= minXvalue && time <= maxXvalue) 
         |> List.mapi((i, time) => {
@@ -145,7 +154,7 @@ let make = (
                   ~length=(boundary.positionPoints.maxX -. boundary.positionPoints.minX), 
                   ~isX=true), 2);
           <line
-            key=string_of_int(i)
+            key=("line-"++(i |> string_of_int)++"-"++svgId)
             x1=x
             y1=floatToPrecision(boundary.positionPoints.minY, 2)
             x2=x 
@@ -155,7 +164,7 @@ let make = (
           />
         })
         |> Array.of_list |> array
-      }
+      }*/
       (!disabledElements.guildLines ? {drawGuildLineX(~lineAmount=20, ~positionPoints=boundary.positionPoints, ~strokeColor=colorElements.guildLines)} : null)
       (!disabledElements.border ? 
         <polyline 
@@ -176,7 +185,8 @@ let make = (
         strokeWidth="3" 
         stroke=colorElements.axisLine
       />
-      (!disabledElements.middleLine ? <line 
+      (!disabledElements.middleLine ? 
+      <line 
         x1={floatToPrecision(boundary.positionPoints.minX, 2)}
         y1=(((boundary.positionPoints.maxY -. boundary.positionPoints.minY) /. 2. +. boundary.positionPoints.minY) |> Js.Float.toString)
         x2={floatToPrecision(boundary.positionPoints.maxX, 2)}

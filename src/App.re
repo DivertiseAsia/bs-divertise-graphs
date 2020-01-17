@@ -105,7 +105,7 @@ let categoryGraph:list(categoryGraph) = [
       },
     },
     {
-      title: "b3",
+      title: "b33333333333",
       color: "green",
       point: {
         x: 0., 
@@ -122,10 +122,10 @@ let categoryGraph:list(categoryGraph) = [
     }, 
   ];
   <>
-  /*<CategoryGraph 
+  <CategoryGraph 
     svgId="category-graph" 
     datas=categoryGraph
-  />*/
+  />
   <LineGraph 
     svgId="line-graph" 
     datas

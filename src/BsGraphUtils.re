@@ -127,6 +127,7 @@ let drawXvaluesStr = (~positionPoints, ~fontColor, ~fontSize=30., ~dateStart:flo
     
     Js.Array.push(
       <text 
+        key=("text-"++(i |> string_of_int)++"-"++dateStr)
         x=floatToPrecision(x, 2)
         y=floatToPrecision(positionPoints.maxY +.  (fontSize *. 2.), 2)
         fill=fontColor
