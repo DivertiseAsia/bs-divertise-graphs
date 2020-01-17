@@ -78,8 +78,57 @@ let make = () => {
       points: values2,
     },
   ];
+  
+let categoryGraph:list(categoryGraph) = [
+    {
+      title: "b1",
+      color: "black",
+      point: {
+        x: 0., 
+        y: 9.5
+      },
+    }, 
+    {
+      title: "b1",
+      color: "black",
+      point: {
+        x: 0., 
+        y: 7.3
+      },
+    }, 
+    {
+      title: "b2",
+      color: "red",
+      point: {
+        x: 0., 
+        y: 4.5
+      },
+    },
+    {
+      title: "b3",
+      color: "green",
+      point: {
+        x: 0., 
+        y: -4.5
+      },
+    },  
+    {
+      title: "b3",
+      color: "green",
+      point: {
+        x: 0., 
+        y: -4.5
+      },
+    }, 
+  ];
+  <>
+  /*<CategoryGraph 
+    svgId="category-graph" 
+    datas=categoryGraph
+  />*/
   <LineGraph 
     svgId="line-graph" 
     datas
   />
+  </>
 };

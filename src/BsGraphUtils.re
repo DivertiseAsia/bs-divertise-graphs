@@ -90,19 +90,19 @@ let getXAxisAsTimes = timelimit => {
     );
 };
 
-let drawGuildLineX = (~lineAmount=20, ~minX, ~maxX, ~minY, ~maxY, ~strokeColor) => {
+let drawGuildLineX = (~lineAmount=20, ~positionPoints, ~strokeColor) => {
     let lines = [||];
     for (i in lineAmount downto 0) {
       let y =
-        minY
-        +. (maxY -. minY)
+        positionPoints.minY
+        +. (positionPoints.maxY -. positionPoints.minY)
         /. (lineAmount |> float_of_int)
         *. (i |> float_of_int);
       Js.Array.push(
         <line
-          x1={floatToPrecision(minX, 2)}
+          x1={floatToPrecision(positionPoints.minX, 2)}
           y1={floatToPrecision(y, 2)}
-          x2={floatToPrecision(maxX, 2)}
+          x2={floatToPrecision(positionPoints.maxX, 2)}
           y2={floatToPrecision(y, 2)}
           strokeWidth="0.5"
           stroke=strokeColor
@@ -114,13 +114,13 @@ let drawGuildLineX = (~lineAmount=20, ~minX, ~maxX, ~minY, ~maxY, ~strokeColor) 
     lines |> ReasonReact.array;
 };
 
-let drawXvaluesStr = (~minX, ~maxX, ~maxY, ~fontColor, ~fontSize=30., ~dateStart:float, ~dateEnd:float, ~range) => {
+let drawXvaluesStr = (~positionPoints, ~fontColor, ~fontSize=30., ~dateStart:float, ~dateEnd:float, ~range) => {
   let yValues = [||];
   for (i in range downto 0) {
     let dateStr = (dateStart +. (((dateEnd -. dateStart) /. (range |> float_of_int)) *. (i |> float_of_int))) |> getDateStr;
     let x =
-      (minX
-      +. (maxX -. minX)
+      (positionPoints.minX
+      +. (positionPoints.maxX -. positionPoints.minX)
       /. (range |> float_of_int)
       *. (i |> float_of_int))  -. fontSize -. 
       ((Js.String.length(dateStr) |> float_of_int) *. (fontSize /. 6.5));
@@ -128,7 +128,7 @@ let drawXvaluesStr = (~minX, ~maxX, ~maxY, ~fontColor, ~fontSize=30., ~dateStart
     Js.Array.push(
       <text 
         x=floatToPrecision(x, 2)
-        y=floatToPrecision(maxY +.  (fontSize *. 2.), 2)
+        y=floatToPrecision(positionPoints.maxY +.  (fontSize *. 2.), 2)
         fill=fontColor
         fontSize=(floatToPrecision(fontSize, 2)++"px")
       >
@@ -139,6 +139,44 @@ let drawXvaluesStr = (~minX, ~maxX, ~maxY, ~fontColor, ~fontSize=30., ~dateStart
     |> ignore;
   };
   yValues |> ReasonReact.array;
+};
+
+let defaultGraphSize = {
+  width: 1000,
+  height: 500,
+};
+
+let defaultPositionPoints = {
+  minX: 100.,
+  maxX: 900.,
+  minY: 50.,
+  maxY: 400.,
+};
+
+let defaultYValue = {
+  max: 10.,
+  min: -10.,
+};
+
+let defaultBoundary = {
+  graphSize: defaultGraphSize,
+  positionPoints: defaultPositionPoints,
+  yValue: defaultYValue,
+};
+
+let defaultColors = {
+  font: "black",
+  guildLines: "gray",
+  axisLine: "black",
+  border: "black",
+};
+
+let defaultDisabledElements = {
+  dataLines: false,
+  dataPoints: false,
+  guildLines: false,
+  border: false,
+  middleLine: false,
 };
 
 let hideTooltip: (string, string) => unit = [%bs.raw

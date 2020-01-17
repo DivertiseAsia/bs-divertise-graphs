@@ -29,3 +29,41 @@ type categoryGraph = {
   color: string,
   point,
 };
+
+type disabledElements = {
+  dataLines: bool,
+  dataPoints: bool,
+  guildLines: bool,
+  border: bool,
+  middleLine: bool,
+};
+
+type colorElements = {
+  font: string,
+  guildLines: string,
+  axisLine: string,
+  border: string,
+};
+
+type graphSize = {
+  width: int,
+  height: int,
+};
+
+type positionPoints = {
+  minX: float,
+  maxX: float,
+  minY: float,
+  maxY: float,
+};
+
+type yValue = {
+  max: float,
+  min: float,
+};
+
+type boundaryGraph = {  
+  graphSize,
+  positionPoints,
+  yValue,
+};
