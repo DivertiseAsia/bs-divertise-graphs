@@ -10,7 +10,7 @@
     {
         title: Name of data
         color: Color of line element
-        values: list of x axis value and y axis value
+        points: list of x axis value and y axis value
     }
     
     Line graph using list of lineGraph type for show datas on graph.
@@ -30,6 +30,41 @@
     - floatDigit is digit position of Y value
     - fontSize is size of text
     - xRange is range of text time for show,
+    - onMouseMove is function for control tooltip
+    - onMouseEnter is function for control tooltip
+    - onMouseLeave is function for control tooltip
+    
+```
+
+```Category graph information
+
+    X axis is category's name
+    Y axis is float type
+
+    ----- << type categoryGraph >> -----
+    {
+        title: name of category
+        color: color of point,
+        point: x axis value and y axis
+    }
+    
+    Category graph using list of categoryGraph type for show datas on graph.
+    You need to convert your datas to list of categoryGraph type before.
+
+    
+
+    ----- << Props >> -----
+
+    - svgId is id of svg element
+    - datas is list of categoryGraph type 
+    - boundary is min/max of value and point in graph
+    - disabledElements is settings disable status of elements in graph
+    - colorElements is settings color of elements in graph
+    - timeRange is start datetime to end dateime from your datas,
+    - floatDigit is digit position of Y value
+    - fontSize is size of text
+    - randomDistance is distance from center of X's value when had random position,
+    - waveXString is toggle ,
     - onMouseMove is function for control tooltip
     - onMouseEnter is function for control tooltip
     - onMouseLeave is function for control tooltip
