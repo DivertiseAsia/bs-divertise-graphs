@@ -188,18 +188,6 @@ let make = (
             ~positionPoints=boundary.positionPoints, ~fontColor=colorElements.font, ~fontSize, 
             ~dateStart=minXvalue, ~dateEnd=maxXvalue, 
             ~range=(xRange < 2 ? 1 : (xRange - 1)))}
-          {!disabledElements.dataLines ?
-            <>
-            {datas 
-              |> List.filter((t:lineGraph) => t.title !== target)
-              |> drawPolyline(~maxXvalue, ~minXvalue, ~target, ~yValueLength, ~positionPoints=boundary.positionPoints, ~drawFill=false)
-            }
-            {datas 
-              |> List.filter((t:lineGraph) => t.title === target)
-              |> drawPolyline(~maxXvalue, ~minXvalue, ~target, ~yValueLength, ~positionPoints=boundary.positionPoints, ~drawFill=false)
-            }
-            </> : null
-          }
           {!disabledElements.dataArea ?
             <>
             {datas 
@@ -209,6 +197,18 @@ let make = (
             {datas 
               |> List.filter((t:lineGraph) => t.title === target)
               |> drawPolyline(~maxXvalue, ~minXvalue, ~target, ~yValueLength, ~positionPoints=boundary.positionPoints)
+            }
+            </> : null
+          }
+          {!disabledElements.dataLines ?
+            <>
+            {datas 
+              |> List.filter((t:lineGraph) => t.title !== target)
+              |> drawPolyline(~maxXvalue, ~minXvalue, ~target, ~yValueLength, ~positionPoints=boundary.positionPoints, ~drawFill=false)
+            }
+            {datas 
+              |> List.filter((t:lineGraph) => t.title === target)
+              |> drawPolyline(~maxXvalue, ~minXvalue, ~target, ~yValueLength, ~positionPoints=boundary.positionPoints, ~drawFill=false)
             }
             </> : null
           }
