@@ -129,6 +129,7 @@ let categoryGraph:list(categoryGraph) = [
     <LineGraph 
       svgId="line-graph" 
       datas
+      yIsDatetime=true
     />
   </>
 };

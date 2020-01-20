@@ -114,10 +114,11 @@ let drawGuildLineX = (~lineAmount=20, ~positionPoints, ~strokeColor) => {
     lines |> ReasonReact.array;
 };
 
-let drawXvaluesStr = (~positionPoints, ~fontColor, ~fontSize=30., ~dateStart:float, ~dateEnd:float, ~range) => {
+let drawXvaluesStr = (~isDatetime, ~positionPoints, ~fontColor, ~fontSize=30., ~dateStart:float, ~dateEnd:float, ~range) => {
   let yValues = [||];
   for (i in range downto 0) {
-    let dateStr = (dateStart +. (((dateEnd -. dateStart) /. (range |> float_of_int)) *. (i |> float_of_int))) |> getDateStr;
+    let value = (dateStart +. (((dateEnd -. dateStart) /. (range |> float_of_int)) *. (i |> float_of_int)));
+    let dateStr = (isDatetime ? getDateStr(value) : floatToPrecision(value, 2));
     let x =
       (positionPoints.minX
       +. (positionPoints.maxX -. positionPoints.minX)

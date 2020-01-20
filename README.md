@@ -21,6 +21,7 @@
     ----- << Props >> -----
 
     - svgId is id of svg element
+    - yIsDatetime is bool for validate Y value type (float or datetime)
     - datas is list of lineGraph type 
     - boundary is min/max of value and point in graph
     - disabledElements is settings disable status of elements in graph

@@ -83,6 +83,7 @@ let drawPolyline = (~maxXvalue, ~minXvalue, ~target, ~yValueLength, ~positionPoi
 [@react.component]
 let make = (
     ~svgId, 
+    ~yIsDatetime,
     ~datas:list(lineGraph)=[], 
     ~boundary=defaultBoundary,
     ~disabledElements=defaultDisabledElements,
@@ -92,7 +93,7 @@ let make = (
     ~floatDigit=2,
     ~fontSize=15.0,
     ~yLength=3,
-    ~xRange=9,
+    ~xRange=4,
     ~onMouseMove=((_e, _tooltipId, _circleId, _tooltipDatas) => ()),
     ~onMouseEnter=((_e, _tooltipId, _circleId, _tooltipDatas) => ()),
     ~onMouseLeave=((_e, _tooltipId, _circleId, _tooltipDatas) => ())
@@ -183,6 +184,7 @@ let make = (
       {
         <g>
           {drawXvaluesStr(
+            ~isDatetime=yIsDatetime,
             ~positionPoints=boundary.positionPoints, ~fontColor=colorElements.font, ~fontSize, 
             ~dateStart=minXvalue, ~dateEnd=maxXvalue, 
             ~range=(xRange < 2 ? 1 : (xRange - 1)))}
