@@ -21,7 +21,7 @@ let routeMatches = (x, link) => "/" ++ x == link;
 
 [@react.component]
 let make = () => {
-  let (state, dispatch) = React.useReducer(
+  let (_state, dispatch) = React.useReducer(
     (state, action) =>
       switch (action) {
         | RouteTo(route) => {...state, route: route}
@@ -122,13 +122,13 @@ let categoryGraph:list(categoryGraph) = [
     }, 
   ];
   <>
-  <CategoryGraph 
-    svgId="category-graph" 
-    datas=categoryGraph
-  />
-  <LineGraph 
-    svgId="line-graph" 
-    datas
-  />
+    <CategoryGraph 
+      svgId="category-graph" 
+      datas=categoryGraph
+    />
+    <LineGraph 
+      svgId="line-graph" 
+      datas
+    />
   </>
 };

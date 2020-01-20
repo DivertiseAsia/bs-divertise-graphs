@@ -33,10 +33,11 @@ let findMaxAndMinTime = (~findMax=true, datas:list(lineGraph)) => {
 let filterValues = (points, minXvalue, maxXvalue) => points 
       |> List.filter((point:point) => 
       point.x >= minXvalue && point.x <= maxXvalue)
-let drawLines = (~maxXvalue, ~minXvalue, ~target, ~yValueLength, ~positionPoints, datas:list(lineGraph)) => {
+
+let drawPolyline = (~maxXvalue, ~minXvalue, ~target, ~yValueLength, ~positionPoints, ~drawFill=true, datas:list(lineGraph)) => {
   datas |> List.mapi((index, data:lineGraph) => {
     <g 
-      key=(data.title ++ "-" ++ (index |> string_of_int))
+      key=(data.title ++ "-line-" ++ (index |> string_of_int))
     >
       {
         let points = [|""|];
@@ -49,14 +50,30 @@ let drawLines = (~maxXvalue, ~minXvalue, ~target, ~yValueLength, ~positionPoints
         }) |> ignore;
         (Array.length(points) === 1 && points[0] === "" ?
           null :
-          <polyline 
-            points=points[0] 
-            fill="none"
-            stroke=data.color 
-            strokeWidth={
-              (Js.String.toLowerCase(target) === Js.String.toLowerCase(data.title) ? "6" : "3")
-            }
-          />
+          (drawFill ? 
+            <polyline 
+              points=(floatToPrecision(positionPoints.minX, 2) ++ "," ++
+                floatToPrecision(positionPoints.maxY, 2) ++ " " ++
+                points[0] ++ " " ++ 
+                floatToPrecision(positionPoints.maxX, 2) ++ "," ++
+                floatToPrecision(positionPoints.maxY, 2) ++ " " ++
+                floatToPrecision(positionPoints.minX, 2) ++ "," ++
+                floatToPrecision(positionPoints.maxY, 2))
+              fill=data.color 
+              stroke="none" 
+              style=(ReactDOMRe.Style.make(
+                ~opacity=(Js.String.toLowerCase(target) === Js.String.toLowerCase(data.title) ? "0.5" : "0.2"), ()))
+            /> 
+            :
+            <polyline 
+              points=points[0] 
+              fill="none"
+              stroke=data.color 
+              strokeWidth={
+                (Js.String.toLowerCase(target) === Js.String.toLowerCase(data.title) ? "6" : "3")
+              }
+            /> 
+          )
         )
       }
     </g>
@@ -74,10 +91,11 @@ let make = (
     ~timeRange=AllTime,
     ~floatDigit=2,
     ~fontSize=15.0,
+    ~yLength=3,
     ~xRange=9,
-    ~onMouseMove=((e, data) => ()),
-    ~onMouseEnter=((e, data) => ()),
-    ~onMouseLeave=((e, data) => ())
+    ~onMouseMove=((_e, _tooltipId, _circleId, _tooltipDatas) => ()),
+    ~onMouseEnter=((_e, _tooltipId, _circleId, _tooltipDatas) => ()),
+    ~onMouseLeave=((_e, _tooltipId, _circleId, _tooltipDatas) => ())
   ) => {
 
   let (minXvalue, maxXvalue) = switch (timeRange) {
@@ -120,17 +138,6 @@ let make = (
     }) |> Array.of_list |> array
   }) |> Array.of_list |> array;
 
-  let minYStr = (boundary.yValue.min < 0. ? 
-                  floatToPrecision(boundary.yValue.min, floatDigit) : 
-                  ((boundary.yValue.min === 0. ? "":"+") ++ (floatToPrecision(boundary.yValue.min, floatDigit))));
-  let middleYvalue = boundary.yValue.max -. (Js.Math.abs_float(boundary.yValue.min -. boundary.yValue.max) /. 2.);
-  let middleYStr = middleYvalue < 0. ? 
-                    floatToPrecision(middleYvalue, floatDigit) : 
-                    ((middleYvalue === 0. ? "":"+") ++ floatToPrecision(middleYvalue, floatDigit));
-  let maxYStr = (boundary.yValue.max < 0. ? 
-                  floatToPrecision(boundary.yValue.max, floatDigit) : 
-                  ((boundary.yValue.max === 0. ? "":"+") ++ (floatToPrecision(boundary.yValue.max, floatDigit))));
-  
   let title:array(string) = datas |> List.map((data:lineGraph) => data.title) |> Array.of_list;
   let viewBox = ("0 0 " ++ (boundary.graphSize.width |> string_of_int) ++ " " ++ (boundary.graphSize.height |> string_of_int));
   <div className="svg-line-graph">
@@ -139,32 +146,10 @@ let make = (
       viewBox 
       preserveAspectRatio="xMinYMin meet" 
       className="svg-content" 
-      onMouseMove=(e => onMouseMove(e, tooltipDatas))
-      onMouseEnter=(e => onMouseEnter(e, tooltipDatas))
-      onMouseLeave=(e => onMouseLeave(e, tooltipDatas))
+      onMouseMove=(e => onMouseMove(e, tooltipId, circleId, tooltipDatas))
+      onMouseEnter=(e => onMouseEnter(e, tooltipId, circleId, tooltipDatas))
+      onMouseLeave=(e => onMouseLeave(e, tooltipId, circleId, tooltipDatas))
     >
-      /*{
-        getXAxisAsTimes(timeRange) 
-        |> List.filter(time => time >= minXvalue && time <= maxXvalue) 
-        |> List.mapi((i, time) => {
-          let x = floatToPrecision(
-                percentOfData(~data=(time -. minXvalue), ~maxValue=(maxXvalue -. minXvalue))
-                |> pointFromPercent(
-                  ~startPoint=boundary.positionPoints.minX, 
-                  ~length=(boundary.positionPoints.maxX -. boundary.positionPoints.minX), 
-                  ~isX=true), 2);
-          <line
-            key=("line-"++(i |> string_of_int)++"-"++svgId)
-            x1=x
-            y1=floatToPrecision(boundary.positionPoints.minY, 2)
-            x2=x 
-            y2=floatToPrecision(boundary.positionPoints.maxY, 2)
-            strokeWidth="0.5" 
-            stroke="antiquewhite"
-          />
-        })
-        |> Array.of_list |> array
-      }*/
       (!disabledElements.guildLines ? {drawGuildLineX(~lineAmount=20, ~positionPoints=boundary.positionPoints, ~strokeColor=colorElements.guildLines)} : null)
       (!disabledElements.border ? 
         <polyline 
@@ -194,39 +179,7 @@ let make = (
         strokeWidth="3" 
         stroke=colorElements.axisLine
       /> : null)
-      <text 
-        x=(floatToPrecision(
-          boundary.positionPoints.minX -. (fontSize *. 2.) -. 
-            ((Js.String.length(maxYStr) |> float_of_int) *. (fontSize /. 3.5))
-          , 2))
-        y=floatToPrecision(boundary.positionPoints.minY +. (fontSize /. 2.5), 2)
-        fill=colorElements.font
-        fontSize=(floatToPrecision(fontSize, 2)++"px")
-      >
-        {string(maxYStr)}
-      </text>
-      <text 
-        x=(floatToPrecision(
-          boundary.positionPoints.minX -. (fontSize *. 2.) -. 
-          ((Js.String.length(middleYStr) |> float_of_int) *. (fontSize /. 3.5))
-        , 2))
-        y=(((boundary.positionPoints.maxY -. boundary.positionPoints.minY) /. 2. +. boundary.positionPoints.minY +. (fontSize /. 2.5)) |> Js.Float.toString)
-        fill=colorElements.font
-        fontSize=(floatToPrecision(fontSize, 2)++"px")
-      >
-        {string(middleYStr)}
-      </text>
-      <text 
-        x=(floatToPrecision(
-          boundary.positionPoints.minX -. (fontSize *. 2.) -. 
-          ((Js.String.length(minYStr) |> float_of_int) *. (fontSize /. 3.5))
-        , 2))
-        y=floatToPrecision(boundary.positionPoints.maxY +. (fontSize /. 2.5), 2)
-        fill=colorElements.font
-        fontSize=(floatToPrecision(fontSize, 2)++"px")
-      >
-        {string(minYStr)}
-      </text>
+      {drawYvalues(~yValueLength, ~yLength, ~boundary, ~floatDigit, ~colorElements, ~fontSize)}
       {
         <g>
           {drawXvaluesStr(
@@ -237,18 +190,30 @@ let make = (
             <>
             {datas 
               |> List.filter((t:lineGraph) => t.title !== target)
-              |> drawLines(~maxXvalue, ~minXvalue, ~target, ~yValueLength, ~positionPoints=boundary.positionPoints)
+              |> drawPolyline(~maxXvalue, ~minXvalue, ~target, ~yValueLength, ~positionPoints=boundary.positionPoints, ~drawFill=false)
             }
             {datas 
               |> List.filter((t:lineGraph) => t.title === target)
-              |> drawLines(~maxXvalue, ~minXvalue, ~target, ~yValueLength, ~positionPoints=boundary.positionPoints)
+              |> drawPolyline(~maxXvalue, ~minXvalue, ~target, ~yValueLength, ~positionPoints=boundary.positionPoints, ~drawFill=false)
+            }
+            </> : null
+          }
+          {!disabledElements.dataArea ?
+            <>
+            {datas 
+              |> List.filter((t:lineGraph) => t.title !== target)
+              |> drawPolyline(~maxXvalue, ~minXvalue, ~target, ~yValueLength, ~positionPoints=boundary.positionPoints)
+            }
+            {datas 
+              |> List.filter((t:lineGraph) => t.title === target)
+              |> drawPolyline(~maxXvalue, ~minXvalue, ~target, ~yValueLength, ~positionPoints=boundary.positionPoints)
             }
             </> : null
           }
           {!disabledElements.dataPoints ? pointElements : null}
         </g>
       }
-      <circle id=circleId cx="-50" cy="-50" r="10" fill="white" />
+      <circle id=circleId cx="-50" cy="-50" r="10" fill="transparent" stroke="black" />
     </svg>
     <div 
       id=tooltipId

@@ -14,8 +14,8 @@ type timeRange =
   | AllTime;
 
 type point = {
-    x: float, /* timestamp */
-    y: float, /* value */
+    x: float,
+    y: float,
 };
 
 type lineGraph = {
@@ -32,6 +32,7 @@ type categoryGraph = {
 
 type disabledElements = {
   dataLines: bool,
+  dataArea: bool,
   dataPoints: bool,
   guildLines: bool,
   border: bool,

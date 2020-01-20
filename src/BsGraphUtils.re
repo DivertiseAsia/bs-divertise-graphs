@@ -142,6 +142,46 @@ let drawXvaluesStr = (~positionPoints, ~fontColor, ~fontSize=30., ~dateStart:flo
   yValues |> ReasonReact.array;
 };
 
+let floatDigitToString = (~value:float, ~floatDigit) => {
+  (value <= 0. ? floatToPrecision(value, floatDigit) : ("+" ++ (floatToPrecision(value, floatDigit))))
+};
+
+let drawYvalues = (~yValueLength, ~yLength, ~boundary, ~floatDigit, ~colorElements, ~fontSize) => {
+  open ReasonReact;
+  let yValueDistance = (yValueLength /. ((yLength |> float_of_int) -. 1.));
+  let yPxDistance = ((boundary.positionPoints.maxY -. boundary.positionPoints.minY) /. ((yLength |> float_of_int) -. 1.));
+  Array.make((yLength - 1), ReasonReact.null)
+  |> Array.mapi((idx, _) => {
+    let value = boundary.yValue.min +. (yValueDistance *. ((idx) |> float_of_int));
+    let lastValue = boundary.yValue.min +. (yValueDistance *. ((idx + 1) |> float_of_int));
+    let yValueStr = floatDigitToString(~value, ~floatDigit);
+    let y = boundary.positionPoints.maxY -. (yPxDistance *. ((idx) |> float_of_int));
+    let lastY = boundary.positionPoints.maxY -. (yPxDistance *. ((idx + 1) |> float_of_int));
+    <g key=("g-yvalue-" ++ (yValueStr))>
+      <text 
+        x=(floatToPrecision(boundary.positionPoints.minX -. (fontSize *. 2.) -. 
+          ((Js.String.length(yValueStr) |> float_of_int) *. (fontSize /. 3.5)), 2))
+        y=floatToPrecision(y +. (fontSize /. 2.5), 2)
+        fill=colorElements.font
+        fontSize=(floatToPrecision(fontSize, 2)++"px")
+      >
+        {string(yValueStr)}
+      </text>
+      (idx === (yLength - 2) ? 
+        <text 
+          x=(floatToPrecision(boundary.positionPoints.minX -. (fontSize *. 2.) -. 
+            ((Js.String.length(floatDigitToString(~value=lastValue, ~floatDigit)) |> float_of_int) *. (fontSize /. 3.5)), 2))
+          y=floatToPrecision(lastY +. (fontSize /. 2.5), 2)
+          fill=colorElements.font
+          fontSize=(floatToPrecision(fontSize, 2)++"px")
+        >
+          {string(floatDigitToString(~value=lastValue, ~floatDigit))}
+        </text> : null
+      )
+    </g>
+  }) |> array
+};
+
 let defaultGraphSize = {
   width: 1000,
   height: 500,
@@ -174,6 +214,7 @@ let defaultColors = {
 
 let defaultDisabledElements = {
   dataLines: false,
+  dataArea: false,
   dataPoints: false,
   guildLines: false,
   border: false,

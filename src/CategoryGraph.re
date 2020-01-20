@@ -42,13 +42,14 @@ let make = (
     ~boundary=defaultBoundary,
     ~disabledElements=defaultDisabledElements,
     ~colorElements=defaultColors,
+    ~yLength=3,
     ~floatDigit=2,
-    ~fontSize=20.0,
+    ~fontSize=15.0,
     ~randomDistance=50.,
     ~waveXString=false,
-    ~onMouseMove=((e, data) => ()),
-    ~onMouseEnter=((e, data) => ()),
-    ~onMouseLeave=((e, data) => ())
+    ~onMouseMove=((_e, _tooltipId, _circleId, _tooltipDatas) => ()),
+    ~onMouseEnter=((_e, _tooltipId, _circleId, _tooltipDatas) => ()),
+    ~onMouseLeave=((_e, _tooltipId, _circleId, _tooltipDatas) => ())
   ) => {
 
   let allCategory = allCategory(~datas);
@@ -56,17 +57,6 @@ let make = (
   let circleId = "circle-" ++ svgId;
 
   let yValueLength = Js.Math.abs_float(boundary.yValue.min -. boundary.yValue.max);
-
-  let minYStr = (boundary.yValue.min < 0. ?
-                  floatToPrecision(boundary.yValue.min, floatDigit) : 
-                  ((boundary.yValue.min === 0. ? "":"+") ++ (floatToPrecision(boundary.yValue.min, floatDigit))));
-  let middleYvalue = boundary.yValue.max -. (Js.Math.abs_float(boundary.yValue.min -. boundary.yValue.max) /. 2.);
-  let middleYStr = middleYvalue < 0. ? 
-                    floatToPrecision(middleYvalue, floatDigit) : 
-                    ((middleYvalue === 0. ? "":"+") ++ floatToPrecision(middleYvalue, floatDigit));
-  let maxYStr = (boundary.yValue.max < 0. ? 
-                  floatToPrecision(boundary.yValue.max, floatDigit) : 
-                  ((boundary.yValue.max === 0. ? "":"+") ++ (floatToPrecision(boundary.yValue.max, floatDigit))));
 
   let tooltipDatas: array(array(string)) = 
     datas |> List.map((data:categoryGraph) => {
@@ -77,8 +67,7 @@ let make = (
         data.title, 
         randomX(point[0], randomDistance), 
         point[1],
-        data.color,
-        "true"
+        data.color
       |]
     }) |> Array.of_list;
   
@@ -99,9 +88,9 @@ let make = (
       viewBox=("0 0 " ++ (boundary.graphSize.width |> string_of_int) ++ " " ++ (boundary.graphSize.height |> string_of_int))
       preserveAspectRatio="xMinYMin meet" 
       className="svg-content"
-      onMouseMove=(e => onMouseMove(e, tooltipDatas))
-      onMouseEnter=(e => onMouseEnter(e, tooltipDatas))
-      onMouseLeave=(e => onMouseLeave(e, tooltipDatas))
+      onMouseMove=(e => onMouseMove(e, tooltipId, circleId, tooltipDatas))
+      onMouseEnter=(e => onMouseEnter(e, tooltipId, circleId, tooltipDatas))
+      onMouseLeave=(e => onMouseLeave(e, tooltipId, circleId, tooltipDatas))
     >
       {!disabledElements.guildLines ? drawGuildLineX(~lineAmount=20, ~positionPoints=boundary.positionPoints, ~strokeColor="black") : null}
       <line 
@@ -129,46 +118,13 @@ let make = (
       >
         {string(titleYAxis)}
       </text>
-      <text 
-        x=(floatToPrecision(
-          boundary.positionPoints.minX -. (fontSize *. 2.) -. 
-            ((Js.String.length(maxYStr) |> float_of_int) *. (fontSize /. 3.5))
-          , 2))
-        y=floatToPrecision(boundary.positionPoints.minY +. (fontSize /. 2.5), 2)
-        fill=colorElements.font
-        fontSize=(floatToPrecision(fontSize, 2)++"px")
-      >
-        {string(maxYStr)}
-      </text>
-      <text 
-        x=(floatToPrecision(
-          boundary.positionPoints.minX -. (fontSize *. 2.) -. 
-          ((Js.String.length(middleYStr) |> float_of_int) *. (fontSize /. 3.5))
-        , 2))
-        y=(((boundary.positionPoints.maxY -. boundary.positionPoints.minY) /. 2. +. boundary.positionPoints.minY +. (fontSize /. 2.5)) |> Js.Float.toString)
-        fill=colorElements.font
-        fontSize=(floatToPrecision(fontSize, 2)++"px")
-      >
-        {string(middleYStr)}
-      </text>
-      <text 
-        x=(floatToPrecision(
-          boundary.positionPoints.minX -. (fontSize *. 2.) -. 
-          ((Js.String.length(minYStr) |> float_of_int) *. (fontSize /. 3.5))
-        , 2))
-        y=floatToPrecision(boundary.positionPoints.maxY +. (fontSize /. 2.5), 2)
-        fill=colorElements.font
-        fontSize=(floatToPrecision(fontSize, 2)++"px")
-      >
-        {string(minYStr)}
-      </text>
+      {drawYvalues(~yValueLength, ~yLength, ~boundary, ~floatDigit, ~colorElements, ~fontSize)}
       {
         <g>
           {
             allCategory |> List.mapi((i, spec) => {
               let x = percentOfData(~data=(i + 1 |> float_of_int), ~maxValue=(List.length(allCategory) |> float_of_int))
                       |> pointFromPercent(~startPoint=boundary.positionPoints.minX, ~length=(boundary.positionPoints.maxX -. boundary.positionPoints.minX), ~isX=true);
-              let xText = (Js.String.length(spec) * 10 / 2) |> float_of_int;
               <g key=("g-"++(i |> string_of_int)++"-"++svgId)>
                 <text 
                   x=(floatToPrecision(x -. ((Js.String.length(spec) |> float_of_int) *. (fontSize /. 3.5)), 2))
