@@ -100,6 +100,7 @@ let drawGuildLineX = (~lineAmount=20, ~positionPoints, ~strokeColor) => {
         *. (i |> float_of_int);
       Js.Array.push(
         <line
+          key=("guildLine-x-"++(i |> string_of_int))
           x1={floatToPrecision(positionPoints.minX, 2)}
           y1={floatToPrecision(y, 2)}
           x2={floatToPrecision(positionPoints.maxX, 2)}
