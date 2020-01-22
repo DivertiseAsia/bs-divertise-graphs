@@ -68,3 +68,8 @@ type boundaryGraph = {
   positionPoints,
   yValue,
 };
+
+type tooltipTitle = {
+  xTitle: string,
+  yTitle: string,
+};

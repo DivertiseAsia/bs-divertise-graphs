@@ -94,9 +94,7 @@ let make = (
     ~fontSize=15.0,
     ~yLength=3,
     ~xRange=4,
-    ~onMouseMove=((_e, _tooltipId, _circleId, _tooltipDatas) => ()),
-    ~onMouseEnter=((_e, _tooltipId, _circleId, _tooltipDatas) => ()),
-    ~onMouseLeave=((_e, _tooltipId, _circleId, _tooltipDatas) => ())
+    ~tooltip=defaultTooltipTitle
   ) => {
 
   let (minXvalue, maxXvalue) = switch (timeRange) {
@@ -139,17 +137,24 @@ let make = (
     }) |> Array.of_list |> array
   }) |> Array.of_list |> array;
 
-  let title:array(string) = datas |> List.map((data:lineGraph) => data.title) |> Array.of_list;
+  let titles:array(string) = datas |> List.map((data:lineGraph) => data.title) |> Array.of_list;
   let viewBox = ("0 0 " ++ (boundary.graphSize.width |> string_of_int) ++ " " ++ (boundary.graphSize.height |> string_of_int));
+  let onMouseEvent = (e) => 
+    showTooltip(
+      boundary.positionPoints.minX, 
+      boundary.positionPoints.maxX, 
+      e, titles, tooltipDatas, [|[||]|], 
+      tooltipId, svgId, circleId, 
+      tooltip.xTitle, tooltip.yTitle, "line-graph");
   <div className="svg-line-graph">
     <svg 
       id=svgId 
       viewBox 
-      preserveAspectRatio="xMinYMin meet" 
-      className="svg-content" 
-      onMouseMove=(e => onMouseMove(e, tooltipId, circleId, tooltipDatas))
-      onMouseEnter=(e => onMouseEnter(e, tooltipId, circleId, tooltipDatas))
-      onMouseLeave=(e => onMouseLeave(e, tooltipId, circleId, tooltipDatas))
+      preserveAspectRatio="xMinYMin meet"
+      className="svg-content"
+      onMouseMove=onMouseEvent
+      onMouseEnter=onMouseEvent
+      onMouseLeave=(_ => hideTooltip(tooltipId))
     >
       (!disabledElements.guildLines ? {drawGuildLineX(~lineAmount=20, ~positionPoints=boundary.positionPoints, ~strokeColor=colorElements.guildLines)} : null)
       (!disabledElements.border ? 
@@ -215,7 +220,6 @@ let make = (
           {!disabledElements.dataPoints ? pointElements : null}
         </g>
       }
-      <circle id=circleId cx="-50" cy="-50" r="10" fill="transparent" stroke="black" />
     </svg>
     <div 
       id=tooltipId

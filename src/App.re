@@ -105,11 +105,11 @@ let categoryGraph:list(categoryGraph) = [
       },
     },
     {
-      title: "b33333333333",
+      title: "b3",
       color: "green",
       point: {
         x: 0., 
-        y: -4.5
+        y: 0.0
       },
     },  
     {

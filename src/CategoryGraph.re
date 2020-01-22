@@ -47,9 +47,7 @@ let make = (
     ~fontSize=15.0,
     ~randomDistance=50.,
     ~waveXString=false,
-    ~onMouseMove=((_e, _tooltipId, _circleId, _tooltipDatas) => ()),
-    ~onMouseEnter=((_e, _tooltipId, _circleId, _tooltipDatas) => ()),
-    ~onMouseLeave=((_e, _tooltipId, _circleId, _tooltipDatas) => ())
+    ~tooltip=defaultTooltipTitle
   ) => {
 
   let allCategory = allCategory(~datas);
@@ -82,15 +80,24 @@ let make = (
       />
   }) |> Array.of_list |> array;
 
+  let titles:array(string) = datas |> List.map((data:categoryGraph) => data.title) |> Array.of_list;
+
+  let onMouseEvent = (e) => 
+      showTooltip(
+        boundary.positionPoints.minX, 
+        boundary.positionPoints.maxX, 
+        e, titles, [|[||]|], tooltipDatas, 
+        tooltipId, svgId, circleId, 
+        tooltip.xTitle, tooltip.yTitle, "category-graph");
   <div className="svg-category">
     <svg 
       id=svgId
       viewBox=("0 0 " ++ (boundary.graphSize.width |> string_of_int) ++ " " ++ (boundary.graphSize.height |> string_of_int))
       preserveAspectRatio="xMinYMin meet" 
       className="svg-content"
-      onMouseMove=(e => onMouseMove(e, tooltipId, circleId, tooltipDatas))
-      onMouseEnter=(e => onMouseEnter(e, tooltipId, circleId, tooltipDatas))
-      onMouseLeave=(e => onMouseLeave(e, tooltipId, circleId, tooltipDatas))
+      onMouseMove=onMouseEvent
+      onMouseEnter=onMouseEvent
+      onMouseLeave=(_ => hideTooltip(tooltipId))
     >
       {!disabledElements.guildLines ? drawGuildLineX(~lineAmount=20, ~positionPoints=boundary.positionPoints, ~strokeColor="black") : null}
       <line 
@@ -151,7 +158,6 @@ let make = (
           {pointElements}
         </g>
       }
-      <circle id=circleId cx="-50" cy="-50" r="10" fill="white" />
     </svg>
     <div 
       id=tooltipId

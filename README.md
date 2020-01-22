@@ -32,30 +32,7 @@
     - fontSize is size of text
     - xRange is range of text time for show
     - yLength is range of Y's value for show
-    - onMouseMove is function for control tooltip
-    - onMouseEnter is function for control tooltip
-    - onMouseLeave is function for control tooltip
-
-    ----- << Tooltip >> -----
-    Function onMouseMove, onMouseEnter and onMouseLeave receive 4 parameters.
-    1. event from mouse
-    2. tooltipId
-    3. circleId
-    4. tooltip datas
-
-    tooltip datas = array(array(array(float)))
-    [|
-        [|
-            [|
-                Y's value,
-                X's value,  // Timestamp
-                Point X, 
-                Point Y
-            |],
-            ...
-        |],
-        ...
-    |]
+    - tooltip is tooltip's title for X axis and y axis
     
 ```
 
@@ -79,6 +56,7 @@
     ----- << Props >> -----
 
     - svgId is id of svg element
+    - titleYAxis is main title for Y axis
     - datas is list of categoryGraph type 
     - boundary is min/max of value and point in graph
     - disabledElements is settings disable status of elements in graph
@@ -89,27 +67,6 @@
     - fontSize is size of text
     - randomDistance is distance from center of X's value when had random position //If randomDistance = 0.0, Points will not random position
     - waveXString is toggle
-    - onMouseMove is function for control tooltip
-    - onMouseEnter is function for control tooltip
-    - onMouseLeave is function for control tooltip
-
-    ----- << Tooltip >> -----
-    Function onMouseMove, onMouseEnter and onMouseLeave receive 4 parameters.
-    1. event from mouse
-    2. tooltipId
-    3. circleId
-    4. tooltip datas
-
-    tooltip datas = array(array(string)) 
-    [|
-        [|
-            Y's value,
-            X's value, 
-            Point X, 
-            Point Y,
-            color,
-        |],
-        ...
-    |]
+    - tooltip is tooltip's title for X axis and y axis
     
 ```

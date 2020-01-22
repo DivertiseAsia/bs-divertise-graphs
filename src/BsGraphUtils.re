@@ -223,14 +223,117 @@ let defaultDisabledElements = {
   middleLine: false,
 };
 
-let hideTooltip: (string, string) => unit = [%bs.raw
+let defaultTooltipTitle = {
+  xTitle: "X",
+  yTitle: "Y",
+};
+
+let getClosest: (float, float, float) => bool = [%bs.raw
   {|
-    function(tooltipId, circleId) {
+    function getClosest(value, axis, r) {
+      return (Math.abs(value - axis) <= r);
+    }
+  |}
+];
+
+let showTooltip:
+  (float, float, ReactEvent.Mouse.t, array(string), 
+    array(array(array(float))), array(array(string)),
+    string, string, string, string, string, string) => unit = [%bs.raw
+  {|
+    function(
+      startX, endX, evt, titles, 
+      lineGraphDatas, categoryGraphDatas,
+      tooltipId, svgId, circleId,
+      xTitle, yTitle, graphType
+    ) {
+      if (document.getElementById(tooltipId) &&
+          document.getElementById(svgId))
+      {
+        var tooltip = document.getElementById(tooltipId),
+            svg = document.getElementById(svgId);
+
+        function svgPoint(element, x, y) {
+          var pt = svg.createSVGPoint();
+          pt.x = x;
+          pt.y = y;
+          return pt.matrixTransform(element.getScreenCTM().inverse());
+        }
+
+        var x = evt.clientX, y = evt.clientY, svgP = svgPoint(svg, x, y);
+
+        if (svgP.x < endX || svgP.x > startX) {
+          var onPoint = false;
+          if (lineGraphDatas.length > 0) {
+            var innerHTML = "";
+
+            if (graphType == "line-graph") {
+              for (var i = 0; i < lineGraphDatas.length; i++) {
+                for (var j = 0; j < lineGraphDatas[i].length; j++) {
+                  if (getClosest(svgP.x.toFixed(2), lineGraphDatas[i][j][2], 4) &&
+                      getClosest(svgP.y.toFixed(2), lineGraphDatas[i][j][3], 4))
+                  {
+                    onPoint = true;
+                    var fontColor = 'white';
+                    if (lineGraphDatas[i][j][0].toFixed(2) > 0.0) {
+                      fontColor = '#2CC66A';
+                    } else if (lineGraphDatas[i][j][0].toFixed(2) < 0.0) {
+                      fontColor = 'red';
+                    };
+                    var date = new Date(lineGraphDatas[i][j][1]);
+                    innerHTML +=
+                    '<b>' + titles[i] + '</b>' +
+                    '<br /></span> ' + xTitle + ': <span style="font-size:10px;">'
+                    + (date.getMonth() + 1) + '/' + date.getDate() + '/' + date.getFullYear() + '</span>' +
+                    '<br />' + yTitle + ': <span style="font-size:10px;">' +
+                    '<span style="color:' + fontColor + ' ">' + (lineGraphDatas[i][j][0].toFixed(2) <= 0.0 ? '' : '+') +
+                    lineGraphDatas[i][j][0].toFixed(2) + '</span>';
+                  }
+                }
+              }
+            } else {
+              for (var j = 0; j < categoryGraphDatas.length; j++) {
+                if (getClosest(svgP.x.toFixed(2), parseFloat(categoryGraphDatas[j][2]), 3) &&
+                    getClosest(svgP.y.toFixed(2), parseFloat(categoryGraphDatas[j][3]), 3))
+                {
+                  onPoint = true;
+                  var fontColor = 'white';
+                  if (parseFloat(categoryGraphDatas[j][0]).toFixed(2) > 0.0) {
+                    fontColor = '#2CC66A';
+                  } else if (parseFloat(categoryGraphDatas[j][0]).toFixed(2) < 0.0) {
+                    fontColor = 'red';
+                  };
+                  innerHTML +=
+                  '<b> ' + xTitle + ': </b>'
+                  + categoryGraphDatas[j][1] +
+                  '<br /><b>' + yTitle + ': </b>' +
+                  '<span style="color:' + fontColor + ' ">' + (parseFloat(categoryGraphDatas[j][0]).toFixed(2) <= 0.0 ? '' : '+') +
+                  parseFloat(categoryGraphDatas[j][0]).toFixed(2) + '</span>';
+                  break;
+                }
+              }
+            }
+
+            if (onPoint && tooltip) {
+              var top = (evt.clientY - tooltip.getBoundingClientRect().height - 10).toString();
+              var left = (evt.clientX - (tooltip.getBoundingClientRect().width / 2)).toString();
+              tooltip.style.cssText = "opacity: 1; background: black; color: white; padding: 10px; border-radius: 6px; position: fixed; top:" + top +"px; left:" + left + "px;";
+              tooltip.innerHTML = innerHTML;
+            } else {
+              tooltip.style.opacity = "0";
+            }
+          }
+        }
+      }
+    }
+  |}
+];
+
+let hideTooltip: (string) => unit = [%bs.raw
+  {|
+    function(tooltipId) {
       if (document.getElementById(tooltipId)) {
         document.getElementById(tooltipId).style.display = "none";
-      }
-      if (document.getElementById(circleId)) {
-        document.getElementById(circleId).style.display = "none";
       }
     }
   |}
