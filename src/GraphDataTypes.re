@@ -1,16 +1,6 @@
 type timeRange =
-  | OneMonth
-  | TwoMonths
-  | ThreeMonths
-  | FourMonths
-  | FiveMonths
-  | SixMonths
-  | SevenMonths
-  | EightMonths
-  | NineMonths
-  | TenMonths
-  | ElevenMonths
-  | OneYear
+  | Month(int)
+  | Year(int)
   | AllTime;
 
 type point = {

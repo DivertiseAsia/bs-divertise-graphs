@@ -55,41 +55,6 @@ let filterByYear = (year: int) =>
     -. float_of_int(year),
 );
 
-let getXAxisAsTimes = timelimit => {
-    GraphDataTypes.(
-      switch (timelimit) {
-      | OneMonth
-      | ThreeMonths =>
-        let axisAsTimes = [||];
-        for (i in 2 downto 0) {
-          Js.Array.push(
-            Js.Date.setDate(filterByMonth(i) |> Js.Date.fromFloat, 1.),
-            axisAsTimes,
-          )
-          |> ignore;
-  
-          Js.Array.push(
-            Js.Date.setDate(filterByMonth(i) |> Js.Date.fromFloat, 15.),
-            axisAsTimes,
-          )
-          |> ignore;
-        };
-        axisAsTimes |> Array.to_list;
-      | OneYear =>
-        let axisAsTimes = [||];
-        for (i in 15 downto 0) {
-          Js.Array.push(
-            Js.Date.setDate(filterByMonth(i) |> Js.Date.fromFloat, 1.),
-            axisAsTimes,
-          )
-          |> ignore;
-        };
-        axisAsTimes |> Array.to_list;
-      | _ => []
-      }
-    );
-};
-
 let drawGuildLineX = (~lineAmount=20, ~positionPoints, ~strokeColor) => {
     let lines = [||];
     for (i in lineAmount downto 0) {

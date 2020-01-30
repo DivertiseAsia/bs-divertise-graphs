@@ -98,18 +98,8 @@ let make = (
   ) => {
 
   let (minXvalue, maxXvalue) = switch (timeRange) {
-  | OneMonth => (filterByMonth(1), Js.Date.now())
-  | TwoMonths => (filterByMonth(2), Js.Date.now())
-  | ThreeMonths => (filterByMonth(3), Js.Date.now())
-  | FourMonths => (filterByMonth(4), Js.Date.now())
-  | FiveMonths => (filterByMonth(5), Js.Date.now())
-  | SixMonths => (filterByMonth(6), Js.Date.now())
-  | SevenMonths => (filterByMonth(7), Js.Date.now())
-  | EightMonths => (filterByMonth(8), Js.Date.now())
-  | NineMonths => (filterByMonth(9), Js.Date.now())
-  | TenMonths => (filterByMonth(10), Js.Date.now())
-  | ElevenMonths => (filterByMonth(11), Js.Date.now())
-  | OneYear => (filterByYear(1), Js.Date.now())
+  | Month(number) => (filterByMonth(number), Js.Date.now())
+  | Year(number) => (filterByYear(number), Js.Date.now())
   | AllTime => (findMaxAndMinTime(~findMax=false, datas), findMaxAndMinTime(~findMax=true, datas))
   };
 
