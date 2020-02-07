@@ -121,7 +121,52 @@ let categoryGraph:list(categoryGraph) = [
       },
     }, 
   ];
+
+  let radarDetailRed = 
+  [
+    {
+      name: "aa1",
+      value: 4.,
+    },
+    {
+      name: "aa3",
+      value: 6.3,
+    },
+  ];
+  let radarDetailYellow = 
+  [
+    {
+      name: "bb1",
+      value: 10.,
+    },
+    {
+      name: "bb2",
+      value: 8.,
+    },
+    {
+      name: "bb3",
+      value: 3.,
+    },
+  ];
+
+  let radarGraph = 
+  [
+    {
+      title: "a1",
+      color: "red",
+      radarDetails: radarDetailRed,
+    }, 
+    {
+      title: "a2",
+      color: "yellow",
+      radarDetails: radarDetailYellow,
+    }
+  ];
   <>
+    <RadarGraph 
+      svgId="radar-graph" 
+      datas=radarGraph
+    />
     <CategoryGraph 
       svgId="category-graph" 
       datas=categoryGraph

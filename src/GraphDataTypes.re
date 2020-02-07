@@ -20,6 +20,16 @@ type categoryGraph = {
   point,
 };
 
+type radarDetail = {
+  name: string,
+  value: float, /* > 0. */
+};
+type radarGraph = {
+  title: string,
+  color: string,
+  radarDetails: list(radarDetail),
+};
+
 type disabledElements = {
   dataLines: bool,
   dataArea: bool,
@@ -57,6 +67,7 @@ type boundaryGraph = {
   graphSize,
   positionPoints,
   yValue,
+  radius: float
 };
 
 type tooltipTitle = {

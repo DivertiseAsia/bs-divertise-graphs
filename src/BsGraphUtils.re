@@ -170,6 +170,20 @@ let defaultBoundary = {
   graphSize: defaultGraphSize,
   positionPoints: defaultPositionPoints,
   yValue: defaultYValue,
+  radius: 0.,
+};
+
+let defaultPositionRadar = {
+  minX: 200.,
+  maxX: 700.,
+  minY: 0.,
+  maxY: 500.,
+};
+let defaultBoundaryRadar = {
+  graphSize: defaultGraphSize,
+  positionPoints: defaultPositionRadar,
+  yValue: defaultYValue,
+  radius: 0.
 };
 
 let defaultColors = {
