@@ -28,13 +28,26 @@ let make = (
     ~boundary=defaultBoundaryRadar,
     ~disabledElements=defaultDisabledElements,
     ~colorElements=defaultColors,
-    ~dataLength=5,
     ~floatDigit=2,
-    ~fontSize=15.0,
+    ~fontSize=20.0,
     ~tooltip=defaultTooltipTitle
   ) => {
+  
+  let allTypeArray = [||];
+  let maxValueArray = [|0.|];
+  datas |> List.map((data:radarGraph) => {
+    data.radarDetails 
+    |> List.sort_uniq((radarDetail1, radarDetail2) => compare(radarDetail1.name, radarDetail2.name))
+    |> List.map(radarDetail => {
+      maxValueArray[0] = (maxValueArray[0] < radarDetail.value ? radarDetail.value : maxValueArray[0]);
+      Js.Array.push(radarDetail.name, allTypeArray);
+    }) |> ignore;
+  }) |> ignore;
 
-  let baseLineLength = ((dataLength < 3 ? 3 : dataLength));  /* min is 3 */
+  let maxValue = maxValueArray[0];
+  let allType = allTypeArray |> Array.to_list |> List.sort_uniq((name1, name2) => compare(name1, name2));
+
+  let baseLineLength = List.length(allType);
   let centerPointX = (boundary.positionPoints.maxX -. boundary.positionPoints.minX) /. 2.;
   let centerPointY = (boundary.positionPoints.maxY -. boundary.positionPoints.minY) /. 2.;
   let r = switch (boundary.radius > 0., centerPointX < centerPointY) {
@@ -42,40 +55,105 @@ let make = (
   | (false, true) => centerPointX *. 0.6
   | (false, false) => centerPointY *. 0.6
   };
-  let lines = Array.make(baseLineLength, ReasonReact.null)
-    |> Array.mapi((idx, _) => {
-      let degree = ((360 / baseLineLength) * idx) |> float_of_int;
+  let lines = allType |> List.mapi((idx, typeStr) => {
+      let degree = ((360 / List.length(allType)) * idx) |> float_of_int;
       (idx === 0 ? 
-        [|centerPointX, centerPointY, centerPointX +. r, centerPointY|] 
+        [|
+          centerPointX |> Js.Float.toString, 
+          centerPointY |> Js.Float.toString, 
+          (centerPointX +. r) |> Js.Float.toString, 
+          centerPointY |> Js.Float.toString, 
+          typeStr, 
+          degree |> Js.Float.toString|] 
         : 
-        [|centerPointX, centerPointY,
-          calAxisFromDegree(~isX=true, ~degree, ~r, ~centerX=centerPointX, ~centerY=centerPointY), 
-          calAxisFromDegree(~isX=false, ~degree, ~r, ~centerX=centerPointX, ~centerY=centerPointY)
+        [|
+          centerPointX |> Js.Float.toString, 
+          centerPointY |> Js.Float.toString,
+          calAxisFromDegree(~isX=true, ~degree, ~r, ~centerX=centerPointX, ~centerY=centerPointY) |> Js.Float.toString, 
+          calAxisFromDegree(~isX=false, ~degree, ~r, ~centerX=centerPointX, ~centerY=centerPointY) |> Js.Float.toString, 
+          typeStr,
+          degree |> Js.Float.toString
         |]
       )
     });
   
-  let baseLineElements = lines |> Array.to_list |> List.mapi((i, line) => {
-    <line 
-      x1=floatToPrecision(line[0], 2)
-      y1=floatToPrecision(line[1], 2)
-      x2=floatToPrecision(line[2], 2)
-      y2=floatToPrecision(line[3], 2)
-      strokeWidth="2"
-      stroke=colorElements.axisLine
-    />
+  let baseLineElements = lines |> List.mapi((i, line) => {
+    let degreeFloat = line[5] |> float_of_string;
+    <>
+      <line 
+        x1={floatToPrecision((line[0] |> float_of_string), 2)}
+        y1={floatToPrecision((line[1] |> float_of_string), 2)}
+        x2={floatToPrecision((line[2] |> float_of_string), 2)}
+        y2={floatToPrecision((line[3] |> float_of_string), 2)}
+        strokeWidth="2"
+        stroke=colorElements.axisLine
+      />
+      <text 
+        x={floatToPrecision(calAxisFromDegree(~isX=true, ~degree=degreeFloat, ~r=r *. 1.5, ~centerX=centerPointX, ~centerY=centerPointY), 2)}
+        y={floatToPrecision(calAxisFromDegree(~isX=false, ~degree=degreeFloat, ~r=r *. 1.5, ~centerX=centerPointX, ~centerY=centerPointY), 2)}
+        fill=colorElements.font
+        fontSize=(floatToPrecision(fontSize, 2)++"px")
+      >
+        {string(line[4])}
+      </text>
+    </>
   }) |> Array.of_list |> array
 
-  let borderRadarPoints = [|""|];
-  lines |> Array.to_list |> List.mapi((i, line) => {
-    borderRadarPoints[0] = borderRadarPoints[0] ++ floatToPrecision(line[2], 2) ++ "," ++ floatToPrecision(line[3], 2) ++ " ";
-  }) |> ignore; 
-  let borderRadar = 
-    <polyline 
-      points=borderRadarPoints[0]
-      fill="none" 
-      stroke="black"
-    /> ;
+  let dataElements = datas |> List.mapi((i, data:radarGraph) => {
+    
+    let polyPoints = [|""|];
+    let circlePoints = [||];
+    let pointElements = 
+      data.radarDetails 
+      |> List.sort_uniq((radarDetail1, radarDetail2) => compare(radarDetail1.name, radarDetail2.name))
+      |> List.map((radarDetail) => {
+        lines |> List.map((line) => {
+          switch (radarDetail.name === line[4]) {
+          | true => {
+              let radForPoint = (r *. percentOfData(~data=radarDetail.value, ~maxValue) /. 100.);
+              let x = 
+                floatToPrecision(
+                  calAxisFromDegree(
+                      ~isX=true, 
+                      ~degree=(line[5] |> float_of_string), 
+                      ~r=radForPoint, 
+                      ~centerX=centerPointX, ~centerY=centerPointY
+                    )
+                  , 2);
+              let y = 
+                floatToPrecision(
+                  calAxisFromDegree(
+                      ~isX=false, 
+                      ~degree=(line[5] |> float_of_string), 
+                      ~r=radForPoint,  
+                      ~centerX=centerPointX, ~centerY=centerPointY
+                    )
+                  , 2);
+              Js.Array.push([|x,y|], circlePoints);
+              (polyPoints[0] = polyPoints[0] ++ x ++ "," ++ y ++ " ")
+            }
+          | false => ()
+          }
+        }) |> ignore;
+      }) |> ignore;
+    <> 
+      <polyline 
+        points=polyPoints[0]
+        fill=(data.color === "" ? "black" : data.color)
+        style=(ReactDOMRe.Style.make(~opacity="0.7", ()))
+      />
+      {
+        circlePoints |> Array.to_list |> List.map((p) => {
+          <circle 
+            cx=p[0]
+            cy=p[1]
+            r="5"
+            stroke="none" fill=(data.color === "" ? "black" : data.color)
+          />
+        }) |> Array.of_list |> array
+      }
+    </>
+  }) |> Array.of_list |> array;
   
   let tooltipId = "tooltip-" ++ svgId;
   let circleId = "circle-" ++ svgId;
@@ -110,6 +188,7 @@ let make = (
         }) |> array
       }
       {baseLineElements}
+      {dataElements}
     </svg>
     <div 
       id=tooltipId

@@ -125,26 +125,30 @@ let categoryGraph:list(categoryGraph) = [
   let radarDetailRed = 
   [
     {
-      name: "aa1",
+      name: "type1",
       value: 4.,
     },
     {
-      name: "aa3",
+      name: "type2",
+      value: 4.3,
+    },
+    {
+      name: "type3",
       value: 6.3,
     },
   ];
   let radarDetailYellow = 
   [
     {
-      name: "bb1",
+      name: "type1",
       value: 10.,
     },
     {
-      name: "bb2",
+      name: "type2",
       value: 8.,
     },
     {
-      name: "bb3",
+      name: "type3",
       value: 3.,
     },
   ];
