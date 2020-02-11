@@ -79,6 +79,10 @@ let make = (
   
   let baseLineElements = lines |> List.mapi((i, line) => {
     let degreeFloat = line[5] |> float_of_string;
+    let txtLength = String.length(line[4]) |> float_of_int;
+    let fontCalculate = (txtLength /. 2. *. fontSize);
+    let x = calAxisFromDegree(~isX=true, ~degree=degreeFloat, ~r=r, ~centerX=centerPointX, ~centerY=centerPointY);
+    let y = calAxisFromDegree(~isX=false, ~degree=degreeFloat, ~r=r, ~centerX=centerPointX, ~centerY=centerPointY);
     <>
       <line 
         x1={floatToPrecision((line[0] |> float_of_string), 2)}
@@ -89,10 +93,22 @@ let make = (
         stroke=colorElements.axisLine
       />
       <text 
-        x={floatToPrecision(calAxisFromDegree(~isX=true, ~degree=degreeFloat, ~r=r *. 1.5, ~centerX=centerPointX, ~centerY=centerPointY), 2)}
-        y={floatToPrecision(calAxisFromDegree(~isX=false, ~degree=degreeFloat, ~r=r *. 1.5, ~centerX=centerPointX, ~centerY=centerPointY), 2)}
+        x={floatToPrecision(x +. 
+            switch (degreeFloat |> int_of_float) {
+            | d when d > 270 || d < 90 => fontCalculate *. (0.3)
+            | d when d < 270 && d > 90 => -.(fontCalculate *. 1.1)
+            | _ => fontCalculate *. -.0.5
+            }
+          , 2)}
+        y={floatToPrecision(y +. 
+          switch (degreeFloat |> int_of_float) {
+          | d when d < 180 && d > 0 => fontCalculate *. -.(0.6)
+          | d when d > 180 && d < 360 => -.(fontCalculate *. -.0.6)
+          | _ => 0.
+          }
+        , 2)}
         fill=colorElements.font
-        fontSize=(floatToPrecision(fontSize, 2)++"px")
+        fontSize=(floatToPrecision(fontSize, 2) ++ "px")
       >
         {string(line[4])}
       </text>
@@ -101,13 +117,17 @@ let make = (
 
   let dataElements = datas |> List.mapi((i, data:radarGraph) => {
     
-    let polyPoints = [|""|];
+    let centerPoint = (centerPointX |> Js.Float.toString) ++ "," ++ (centerPointY |> Js.Float.toString);
+    let polyPoints = [||];
     let circlePoints = [||];
+    let firstDegree = [|-1.|];
+    let secondDegree = [|-1.|];
+    let lastDegree = [|0.|];
     let pointElements = 
       data.radarDetails 
       |> List.sort_uniq((radarDetail1, radarDetail2) => compare(radarDetail1.name, radarDetail2.name))
-      |> List.map((radarDetail) => {
-        lines |> List.map((line) => {
+      |> List.mapi((i ,radarDetail) => {
+        lines |> List.mapi((idx, line) => {
           switch (radarDetail.name === line[4]) {
           | true => {
               let radForPoint = (r *. percentOfData(~data=radarDetail.value, ~maxValue) /. 100.);
@@ -129,18 +149,38 @@ let make = (
                       ~centerX=centerPointX, ~centerY=centerPointY
                     )
                   , 2);
+              if (firstDegree[0] === -1.) {
+                firstDegree[0] = (line[5] |> float_of_string);
+              } else {
+                if (secondDegree[0] === -1.) {
+                  secondDegree[0] = (line[5] |> float_of_string);
+                };
+              };
+              lastDegree[0] = (line[5] |> float_of_string);
               Js.Array.push([|x,y|], circlePoints);
-              (polyPoints[0] = polyPoints[0] ++ x ++ "," ++ y ++ " ")
+              Js.Array.push(x ++ "," ++ y, polyPoints);
+              ()
             }
           | false => ()
           }
         }) |> ignore;
       }) |> ignore;
-    <> 
+    let allPoint = [|""|];
+    let allPosition = polyPoints |> Array.to_list |> List.mapi((idxPoint, point:string) => {
+      if (idxPoint === 0 && (lastDegree[0] -. firstDegree[0]) < 180.) {
+        (allPoint[0] = allPoint[0] ++ centerPoint ++ " ")
+      } else if (idxPoint === 1 && (360. -. secondDegree[0]) < 180.) {
+        (allPoint[0] = allPoint[0] ++ centerPoint ++ " ")
+      };
+      (allPoint[0] = allPoint[0] ++ point ++ " ")
+    });
+    <g> 
       <polyline 
-        points=polyPoints[0]
+        points=allPoint[0]
+        stroke=(data.color === "" ? "black" : data.color)
+        strokeWidth="3"
         fill=(data.color === "" ? "black" : data.color)
-        style=(ReactDOMRe.Style.make(~opacity="0.7", ()))
+        style=(ReactDOMRe.Style.make(~opacity="0.4", ()))
       />
       {
         circlePoints |> Array.to_list |> List.map((p) => {
@@ -152,7 +192,7 @@ let make = (
           />
         }) |> Array.of_list |> array
       }
-    </>
+    </g>
   }) |> Array.of_list |> array;
   
   let tooltipId = "tooltip-" ++ svgId;

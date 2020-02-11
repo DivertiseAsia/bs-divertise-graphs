@@ -132,10 +132,6 @@ let categoryGraph:list(categoryGraph) = [
       name: "type2",
       value: 4.3,
     },
-    {
-      name: "type3",
-      value: 6.3,
-    },
   ];
   let radarDetailYellow = 
   [
@@ -151,6 +147,25 @@ let categoryGraph:list(categoryGraph) = [
       name: "type3",
       value: 3.,
     },
+    {
+      name: "type5",
+      value: 6.3,
+    },
+  ];
+  let radarDetailGreen = 
+  [
+    {
+      name: "type1",
+      value: 10.,
+    },
+    {
+      name: "type5",
+      value: 10.,
+    },
+    {
+      name: "type51",
+      value: 10.,
+    },
   ];
 
   let radarGraph = 
@@ -164,6 +179,11 @@ let categoryGraph:list(categoryGraph) = [
       title: "a2",
       color: "yellow",
       radarDetails: radarDetailYellow,
+    }, 
+    {
+      title: "a3",
+      color: "green",
+      radarDetails: radarDetailGreen,
     }
   ];
   <>
