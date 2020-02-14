@@ -47,7 +47,6 @@ let make = (
   let maxValue = maxValueArray[0];
   let allType = allTypeArray |> Array.to_list |> List.sort_uniq((name1, name2) => compare(name1, name2));
 
-  let baseLineLength = List.length(allType);
   let centerPointX = (boundary.positionPoints.maxX -. boundary.positionPoints.minX) /. 2.;
   let centerPointY = (boundary.positionPoints.maxY -. boundary.positionPoints.minY) /. 2.;
   let r = switch (boundary.radius > 0., centerPointX < centerPointY) {
@@ -83,7 +82,8 @@ let make = (
     let fontCalculate = (txtLength /. 2. *. fontSize);
     let x = calAxisFromDegree(~isX=true, ~degree=degreeFloat, ~r=r, ~centerX=centerPointX, ~centerY=centerPointY);
     let y = calAxisFromDegree(~isX=false, ~degree=degreeFloat, ~r=r, ~centerX=centerPointX, ~centerY=centerPointY);
-    <>
+    let key = ("g-base-line-" ++ (i |> string_of_int));
+    <g key>
       <line 
         x1={floatToPrecision((line[0] |> float_of_string), 2)}
         y1={floatToPrecision((line[1] |> float_of_string), 2)}
@@ -112,10 +112,10 @@ let make = (
       >
         {string(line[4])}
       </text>
-    </>
+    </g>
   }) |> Array.of_list |> array
 
-  let dataElements = datas |> List.mapi((i, data:radarGraph) => {
+  let dataElements = datas |> List.map((data:radarGraph) => {
     
     let centerPoint = (centerPointX |> Js.Float.toString) ++ "," ++ (centerPointY |> Js.Float.toString);
     let polyPoints = [||];
@@ -123,11 +123,10 @@ let make = (
     let firstDegree = [|-1.|];
     let secondDegree = [|-1.|];
     let lastDegree = [|0.|];
-    let pointElements = 
-      data.radarDetails 
+    data.radarDetails 
       |> List.sort_uniq((radarDetail1, radarDetail2) => compare(radarDetail1.name, radarDetail2.name))
-      |> List.mapi((i ,radarDetail) => {
-        lines |> List.mapi((idx, line) => {
+      |> List.map((radarDetail) => {
+        lines |> List.map((line) => {
           switch (radarDetail.name === line[4]) {
           | true => {
               let radForPoint = (r *. percentOfData(~data=radarDetail.value, ~maxValue) /. 100.);
@@ -157,8 +156,8 @@ let make = (
                 };
               };
               lastDegree[0] = (line[5] |> float_of_string);
-              Js.Array.push([|x,y|], circlePoints);
-              Js.Array.push(x ++ "," ++ y, polyPoints);
+              Js.Array.push([|x,y|], circlePoints) |> ignore;
+              Js.Array.push(x ++ "," ++ y, polyPoints) |> ignore;
               ()
             }
           | false => ()
@@ -166,14 +165,14 @@ let make = (
         }) |> ignore;
       }) |> ignore;
     let allPoint = [|""|];
-    let allPosition = polyPoints |> Array.to_list |> List.mapi((idxPoint, point:string) => {
+    polyPoints |> Array.to_list |> List.mapi((idxPoint, point:string) => {
       if (idxPoint === 0 && (lastDegree[0] -. firstDegree[0]) < 180.) {
         (allPoint[0] = allPoint[0] ++ centerPoint ++ " ")
       } else if (idxPoint === 1 && (360. -. secondDegree[0]) < 180.) {
         (allPoint[0] = allPoint[0] ++ centerPoint ++ " ")
       };
       (allPoint[0] = allPoint[0] ++ point ++ " ")
-    });
+    }) |> ignore;
     <g> 
       <polyline 
         points=allPoint[0]
@@ -196,7 +195,6 @@ let make = (
   }) |> Array.of_list |> array;
   
   let tooltipId = "tooltip-" ++ svgId;
-  let circleId = "circle-" ++ svgId;
   
   <div className="svg-category">
     <svg 

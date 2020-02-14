@@ -27,12 +27,6 @@ let getDateStr = (~separateStr="/", date:float) => {
 let pointFromPercent = (~startPoint, ~length, ~isX=false, percent) => startPoint +. ((length /. 100.) *. (isX ? percent : (100. -. percent)));
 let percentOfData = (~data, ~maxValue) => (maxValue === 0. ? 0. : (data /. maxValue) *. 100.);
 
-let sortDatetimeLineGraph = (lineGraphDatas:list(lineGraph)) => {
-  lineGraphDatas |> List.map((lineGraphData) => {
-    ()
-  });
-};
-
 let lastPoint = (values, points, maxX) => {
     (List.length(values) === 1 ?
       (maxX |> Js.Float.toString) ++ "," ++ Js.String.split(",", points)[1]
@@ -55,15 +49,13 @@ let filterByYear = (year: int) =>
     -. float_of_int(year),
 );
 
-let drawGuildLineX = (~lineAmount=20, ~positionPoints, ~strokeColor) => {
+let drawGuildLineAxisX = (~lineAmount=20, ~positionPoints, ~strokeColor) => {
     let lines = [||];
     for (i in lineAmount downto 0) {
       let y =
-        positionPoints.minY
-        +. (positionPoints.maxY -. positionPoints.minY)
-        /. (lineAmount |> float_of_int)
-        *. (i |> float_of_int);
-      Js.Array.push(
+        positionPoints.minY +. (positionPoints.maxY -. positionPoints.minY)
+        /. (lineAmount |> float_of_int) *. (i |> float_of_int);
+      let lineElement = 
         <line
           key=("guildLine-x-"++(i |> string_of_int))
           x1={floatToPrecision(positionPoints.minX, 2)}
@@ -72,10 +64,8 @@ let drawGuildLineX = (~lineAmount=20, ~positionPoints, ~strokeColor) => {
           y2={floatToPrecision(y, 2)}
           strokeWidth="0.5"
           stroke=strokeColor
-        />,
-        lines,
-      )
-      |> ignore;
+        />;
+      Js.Array.push(lineElement, lines) |> ignore;
     };
     lines |> ReasonReact.array;
 };
@@ -86,25 +76,22 @@ let drawXvaluesStr = (~isDatetime, ~positionPoints, ~fontColor, ~fontSize=30., ~
     let value = (dateStart +. (((dateEnd -. dateStart) /. (range |> float_of_int)) *. (i |> float_of_int)));
     let dateStr = (isDatetime ? getDateStr(value) : floatToPrecision(value, 2));
     let x =
-      (positionPoints.minX
-      +. (positionPoints.maxX -. positionPoints.minX)
-      /. (range |> float_of_int)
-      *. (i |> float_of_int))  -. fontSize -. 
+      (positionPoints.minX +. (positionPoints.maxX -. positionPoints.minX) 
+      /. (range |> float_of_int) *. (i |> float_of_int))  -. fontSize -. 
       ((Js.String.length(dateStr) |> float_of_int) *. (fontSize /. 6.5));
     
     Js.Array.push(
       <text 
-        key=("text-"++(i |> string_of_int)++"-"++dateStr)
-        x=floatToPrecision(x, 2)
-        y=floatToPrecision(positionPoints.maxY +.  (fontSize *. 2.), 2)
+        key=("text-" ++ (i |> string_of_int) ++ "-" ++ dateStr)
+        x={floatToPrecision(x, 2)}
+        y={floatToPrecision(positionPoints.maxY +.  (fontSize *. 2.), 2)}
         fill=fontColor
-        fontSize=(floatToPrecision(fontSize, 2)++"px")
+        fontSize=(floatToPrecision(fontSize, 2) ++ "px")
       >
         {ReasonReact.string(dateStr)}
       </text>,
-      yValues,
-    )
-    |> ignore;
+      yValues
+    ) |> ignore;
   };
   yValues |> ReasonReact.array;
 };
@@ -115,35 +102,34 @@ let floatDigitToString = (~value:float, ~floatDigit) => {
 
 let drawYvalues = (~yValueLength, ~yLength, ~boundary, ~floatDigit, ~colorElements, ~fontSize) => {
   open ReasonReact;
-  let yValueDistance = (yValueLength /. ((yLength |> float_of_int) -. 1.));
-  let yPxDistance = ((boundary.positionPoints.maxY -. boundary.positionPoints.minY) /. ((yLength |> float_of_int) -. 1.));
+  let yValueDistance = yValueLength /. ((yLength |> float_of_int) -. 1.);
+  let yPixelDistance = (boundary.positionPoints.maxY -. boundary.positionPoints.minY) /. ((yLength |> float_of_int) -. 1.);
   Array.make((yLength - 1), ReasonReact.null)
-  |> Array.mapi((idx, _) => {
-    let value = boundary.yValue.min +. (yValueDistance *. ((idx) |> float_of_int));
-    let lastValue = boundary.yValue.min +. (yValueDistance *. ((idx + 1) |> float_of_int));
-    let yValueStr = floatDigitToString(~value, ~floatDigit);
-    let y = boundary.positionPoints.maxY -. (yPxDistance *. ((idx) |> float_of_int));
-    let lastY = boundary.positionPoints.maxY -. (yPxDistance *. ((idx + 1) |> float_of_int));
-    <g key=("g-yvalue-" ++ (yValueStr))>
-      <text 
-        x=(floatToPrecision(boundary.positionPoints.minX -. (fontSize *. 2.) -. 
-          ((Js.String.length(yValueStr) |> float_of_int) *. (fontSize /. 3.5)), 2))
-        y=floatToPrecision(y +. (fontSize /. 2.5), 2)
-        fill=colorElements.font
-        fontSize=(floatToPrecision(fontSize, 2)++"px")
-      >
-        {string(yValueStr)}
+  |> Array.mapi((index, _) => {
+    let value = boundary.yValue.min +. yValueDistance *. ((index) |> float_of_int);
+    let yValueString = floatDigitToString(~value, ~floatDigit);
+    let y = boundary.positionPoints.maxY -. (yPixelDistance *. ((index) |> float_of_int));
+    let pixelLastY = boundary.positionPoints.maxY -. (yPixelDistance *. ((index + 1) |> float_of_int));
+    let isLastYvalue = index === (yLength - 2);
+    let x = floatToPrecision(boundary.positionPoints.minX -. (fontSize *. 2.) -. 
+            ((Js.String.length(yValueString) |> float_of_int) *. (fontSize /. 3.5)), 2);
+    <g key=("group-y-value-" ++ (yValueString))>
+      <text x y={floatToPrecision(y +. (fontSize /. 2.5), 2)} fill=colorElements.font fontSize={floatToPrecision(fontSize, 2)++"px"}>
+        {string(yValueString)}
       </text>
-      (idx === (yLength - 2) ? 
-        <text 
-          x=(floatToPrecision(boundary.positionPoints.minX -. (fontSize *. 2.) -. 
-            ((Js.String.length(floatDigitToString(~value=lastValue, ~floatDigit)) |> float_of_int) *. (fontSize /. 3.5)), 2))
-          y=floatToPrecision(lastY +. (fontSize /. 2.5), 2)
-          fill=colorElements.font
-          fontSize=(floatToPrecision(fontSize, 2)++"px")
-        >
-          {string(floatDigitToString(~value=lastValue, ~floatDigit))}
-        </text> : null
+      (isLastYvalue ? 
+        {
+          let lastValue = boundary.yValue.min +. (yValueDistance *. ((index + 1) |> float_of_int));
+          <text 
+            x=(floatToPrecision(boundary.positionPoints.minX -. (fontSize *. 2.) -. 
+              ((Js.String.length(floatDigitToString(~value=lastValue, ~floatDigit)) |> float_of_int) *. (fontSize /. 3.5)), 2))
+            y=floatToPrecision(pixelLastY +. (fontSize /. 2.5), 2)
+            fill=colorElements.font
+            fontSize=(floatToPrecision(fontSize, 2) ++ "px")
+          >
+            {string(floatDigitToString(~value=lastValue, ~floatDigit))}
+          </text>
+        } : null
       )
     </g>
   }) |> array
@@ -254,19 +240,19 @@ let showTooltip:
                   {
                     onPoint = true;
                     var fontColor = 'white';
-                    if (lineGraphDatas[i][j][0].toFixed(2) > 0.0) {
+                    if (lineGraphDatas[i][j][1].toFixed(2) > 0.0) {
                       fontColor = '#2CC66A';
-                    } else if (lineGraphDatas[i][j][0].toFixed(2) < 0.0) {
+                    } else if (lineGraphDatas[i][j][1].toFixed(2) < 0.0) {
                       fontColor = 'red';
                     };
-                    var date = new Date(lineGraphDatas[i][j][1]);
+                    var date = new Date(lineGraphDatas[i][j][0]);
                     innerHTML +=
                     '<b>' + titles[i] + '</b>' +
                     '<br /></span> ' + xTitle + ': <span style="font-size:10px;">'
                     + (date.getMonth() + 1) + '/' + date.getDate() + '/' + date.getFullYear() + '</span>' +
                     '<br />' + yTitle + ': <span style="font-size:10px;">' +
-                    '<span style="color:' + fontColor + ' ">' + (lineGraphDatas[i][j][0].toFixed(2) <= 0.0 ? '' : '+') +
-                    lineGraphDatas[i][j][0].toFixed(2) + '</span>';
+                    '<span style="color:' + fontColor + ' ">' + (lineGraphDatas[i][j][1].toFixed(2) <= 0.0 ? '' : '+') +
+                    lineGraphDatas[i][j][1].toFixed(2) + '</span>';
                   }
                 }
               }
@@ -277,17 +263,17 @@ let showTooltip:
                 {
                   onPoint = true;
                   var fontColor = 'white';
-                  if (parseFloat(categoryGraphDatas[j][0]).toFixed(2) > 0.0) {
+                  if (parseFloat(categoryGraphDatas[j][1]).toFixed(2) > 0.0) {
                     fontColor = '#2CC66A';
-                  } else if (parseFloat(categoryGraphDatas[j][0]).toFixed(2) < 0.0) {
+                  } else if (parseFloat(categoryGraphDatas[j][1]).toFixed(2) < 0.0) {
                     fontColor = 'red';
                   };
                   innerHTML +=
                   '<b> ' + xTitle + ': </b>'
-                  + categoryGraphDatas[j][1] +
+                  + categoryGraphDatas[j][0] +
                   '<br /><b>' + yTitle + ': </b>' +
-                  '<span style="color:' + fontColor + ' ">' + (parseFloat(categoryGraphDatas[j][0]).toFixed(2) <= 0.0 ? '' : '+') +
-                  parseFloat(categoryGraphDatas[j][0]).toFixed(2) + '</span>';
+                  '<span style="color:' + fontColor + ' ">' + (parseFloat(categoryGraphDatas[j][1]).toFixed(2) <= 0.0 ? '' : '+') +
+                  parseFloat(categoryGraphDatas[j][1]).toFixed(2) + '</span>';
                   break;
                 }
               }

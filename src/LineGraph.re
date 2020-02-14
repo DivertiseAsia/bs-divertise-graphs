@@ -2,22 +2,14 @@ open ReasonReact;
 open GraphDataTypes;
 open BsGraphUtils;
 
-let calculatePoint = (~dataPoint:point, ~maxXvalue, ~minXvalue, ~positionPoints, point, yValueLength) => {
-  let axisX = floatToPrecision(
-                percentOfData(~data=(dataPoint.x -. minXvalue), ~maxValue=(maxXvalue -. minXvalue))
-                |> pointFromPercent(~startPoint=positionPoints.minX, ~length=(positionPoints.maxX -. positionPoints.minX), ~isX=true)
-                , 2
-              );
-
+let calculatePoint = (~dataPoint:point, ~maxXvalue, ~minXvalue, ~positionPoints, yValueLength) => {
+  let axisX = percentOfData(~data=(dataPoint.x -. minXvalue), ~maxValue=(maxXvalue -. minXvalue))
+              |> pointFromPercent(~startPoint=positionPoints.minX, ~length=(positionPoints.maxX -. positionPoints.minX), ~isX=true);
   let axisY = percentOfData(
-                ~data=(dataPoint.y < 0. ? 
-                  (10. -. Js.Math.abs_float(dataPoint.y))
-                  : (dataPoint.y +. 10.)), 
+                ~data=(dataPoint.y < 0. ? (10. -. Js.Math.abs_float(dataPoint.y)) : (dataPoint.y +. 10.)), 
                 ~maxValue=yValueLength
-              ) 
-              |> pointFromPercent(~startPoint=positionPoints.minY, ~length=(positionPoints.maxY -. positionPoints.minY))
-              |> Js.Float.toString;
-  point ++ (axisX ++ ",") ++ (axisY ++ "") ++ " ";
+              ) |> pointFromPercent(~startPoint=positionPoints.minY, ~length=(positionPoints.maxY -. positionPoints.minY));
+  floatToPrecision(axisX, 2) ++ "," ++ floatToPrecision(axisY, 2) ++ "" ++ " ";
 };
 
 let findMaxAndMinTime = (~findMax=true, datas:list(lineGraph)) => {
@@ -36,21 +28,19 @@ let filterValues = (points, minXvalue, maxXvalue) => points
 
 let drawPolyline = (~maxXvalue, ~minXvalue, ~target, ~yValueLength, ~positionPoints, ~drawFill=true, datas:list(lineGraph)) => {
   datas |> List.mapi((index, data:lineGraph) => {
-    <g 
-      key=(data.title ++ "-line-" ++ (index |> string_of_int))
-    >
+    <g key=(data.title ++ "-line-" ++ (index |> string_of_int))>
       {
         let points = [|""|];
         filterValues(data.points, minXvalue, maxXvalue) 
         |> List.mapi((i, point) => {
-          points[0] = calculatePoint(~dataPoint=point, ~maxXvalue, ~minXvalue, ~positionPoints, points[0], yValueLength);
+          points[0] = points[0] ++ calculatePoint(~dataPoint=point, ~maxXvalue, ~minXvalue, ~positionPoints, yValueLength);
           if (i === List.length(data.points) - 1) {
             points[0] = points[0] ++ lastPoint(data.points, points[0], positionPoints.maxX)
           };
         }) |> ignore;
-        (Array.length(points) === 1 && points[0] === "" ?
-          null :
-          (drawFill ? 
+        let isDataValid = (Array.length(points) === 1 && points[0] != "");
+        switch (isDataValid, drawFill) {
+        | (true, true) => 
             <polyline 
               points=(floatToPrecision(positionPoints.minX, 2) ++ "," ++
                 floatToPrecision(positionPoints.maxY, 2) ++ " " ++
@@ -64,7 +54,7 @@ let drawPolyline = (~maxXvalue, ~minXvalue, ~target, ~yValueLength, ~positionPoi
               style=(ReactDOMRe.Style.make(
                 ~opacity=(Js.String.toLowerCase(target) === Js.String.toLowerCase(data.title) ? "0.5" : "0.2"), ()))
             /> 
-            :
+        | (true, false) => 
             <polyline 
               points=points[0] 
               fill="none"
@@ -73,8 +63,8 @@ let drawPolyline = (~maxXvalue, ~minXvalue, ~target, ~yValueLength, ~positionPoi
                 (Js.String.toLowerCase(target) === Js.String.toLowerCase(data.title) ? "6" : "3")
               }
             /> 
-          )
-        )
+        | _ => null
+        }
       }
     </g>
   }) |> Array.of_list |> array
@@ -110,15 +100,15 @@ let make = (
   let tooltipDatas: array(array(array(float))) = 
     datas |> List.map((data:lineGraph) => {
       filterValues(data.points, minXvalue, maxXvalue) |> List.map((dataPoint:point) => {
-        let point = calculatePoint(~dataPoint, ~maxXvalue, ~minXvalue, ~positionPoints=boundary.positionPoints, "", yValueLength) |> Js.String.split(",");
-        [|dataPoint.y, dataPoint.x, point[0] |> float_of_string, point[1] |> float_of_string|]
+        let point = calculatePoint(~dataPoint, ~maxXvalue, ~minXvalue, ~positionPoints=boundary.positionPoints, yValueLength) |> Js.String.split(",");
+        [|dataPoint.x, dataPoint.y, point[0] |> float_of_string, point[1] |> float_of_string|]
       }) |> Array.of_list;
     }) |> Array.of_list;
   
   let pointElements = tooltipDatas |> Array.to_list |> List.mapi((index, tooltipData) => {
     tooltipData |> Array.to_list |> List.mapi((i, data) => {
       <circle 
-        key=("circle-"++(i |> string_of_int)++"-"++svgId)
+        key=("circle-" ++ (i |> string_of_int) ++ "-" ++ svgId)
         cx=(data[2] |> Js.Float.toString) 
         cy=(data[3] |> Js.Float.toString) 
         r="4" 
@@ -127,15 +117,18 @@ let make = (
     }) |> Array.of_list |> array
   }) |> Array.of_list |> array;
 
-  let titles:array(string) = datas |> List.map((data:lineGraph) => data.title) |> Array.of_list;
+  let allTitleOfData:array(string) = datas |> List.map((data:lineGraph) => data.title) |> Array.of_list;
+  
   let viewBox = ("0 0 " ++ (boundary.graphSize.width |> string_of_int) ++ " " ++ (boundary.graphSize.height |> string_of_int));
-  let onMouseEvent = (e) => 
+  
+  let onMouseEvent = (mouseEvent) => 
     showTooltip(
       boundary.positionPoints.minX, 
       boundary.positionPoints.maxX, 
-      e, titles, tooltipDatas, [|[||]|], 
+      mouseEvent, allTitleOfData, tooltipDatas, [|[||]|], 
       tooltipId, svgId, circleId, 
       tooltip.xTitle, tooltip.yTitle, "line-graph");
+
   <div className="svg-line-graph">
     <svg 
       id=svgId 
@@ -146,7 +139,7 @@ let make = (
       onMouseEnter=onMouseEvent
       onMouseLeave=(_ => hideTooltip(tooltipId))
     >
-      (!disabledElements.guildLines ? {drawGuildLineX(~lineAmount=20, ~positionPoints=boundary.positionPoints, ~strokeColor=colorElements.guildLines)} : null)
+      (!disabledElements.guildLines ? {drawGuildLineAxisX(~lineAmount=20, ~positionPoints=boundary.positionPoints, ~strokeColor=colorElements.guildLines)} : null)
       (!disabledElements.border ? 
         <polyline 
           points=(
@@ -177,6 +170,10 @@ let make = (
       /> : null)
       {drawYvalues(~yValueLength, ~yLength, ~boundary, ~floatDigit, ~colorElements, ~fontSize)}
       {
+        let drawPolyLines = (~datas, ~isTarget, ~drawFill) => {
+          datas |> List.filter((lineGraph:lineGraph) => (isTarget ? lineGraph.title === target : lineGraph.title !== target))
+          |> drawPolyline(~maxXvalue, ~minXvalue, ~target, ~yValueLength, ~positionPoints=boundary.positionPoints, ~drawFill)
+        };
         <g>
           {drawXvaluesStr(
             ~isDatetime=yIsDatetime,
@@ -185,27 +182,17 @@ let make = (
             ~range=(xRange < 2 ? 1 : (xRange - 1)))}
           {!disabledElements.dataArea ?
             <>
-            {datas 
-              |> List.filter((t:lineGraph) => t.title !== target)
-              |> drawPolyline(~maxXvalue, ~minXvalue, ~target, ~yValueLength, ~positionPoints=boundary.positionPoints)
-            }
-            {datas 
-              |> List.filter((t:lineGraph) => t.title === target)
-              |> drawPolyline(~maxXvalue, ~minXvalue, ~target, ~yValueLength, ~positionPoints=boundary.positionPoints)
-            }
-            </> : null
+              {drawPolyLines(~datas, ~isTarget=false, ~drawFill=false)}
+              {drawPolyLines(~datas, ~isTarget=true, ~drawFill=false)}
+            </> 
+            : null
           }
           {!disabledElements.dataLines ?
             <>
-            {datas 
-              |> List.filter((t:lineGraph) => t.title !== target)
-              |> drawPolyline(~maxXvalue, ~minXvalue, ~target, ~yValueLength, ~positionPoints=boundary.positionPoints, ~drawFill=false)
-            }
-            {datas 
-              |> List.filter((t:lineGraph) => t.title === target)
-              |> drawPolyline(~maxXvalue, ~minXvalue, ~target, ~yValueLength, ~positionPoints=boundary.positionPoints, ~drawFill=false)
-            }
-            </> : null
+              {drawPolyLines(~datas, ~isTarget=false, ~drawFill=true)}
+              {drawPolyLines(~datas, ~isTarget=true, ~drawFill=true)}
+            </> 
+            : null
           }
           {!disabledElements.dataPoints ? pointElements : null}
         </g>

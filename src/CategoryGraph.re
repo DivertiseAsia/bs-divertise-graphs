@@ -6,23 +6,16 @@ let randomX = (x, randomDistance) => (((x |> float_of_string) +. (Js.Math.random
 
 let calculatePoint = (~y:float, ~title:string, ~allCategory, ~yValueLength, ~positionPoints, point) => {
   let specIndex = Belt.Array.getIndexBy((allCategory |> Array.of_list), (spec => spec === title));
+  
   let axisX = switch specIndex {
-  | Some(index) => floatToPrecision(
+  | Some(index) => 
       percentOfData(~data=(index + 1 |> float_of_int), ~maxValue=(List.length(allCategory) |> float_of_int))
-      |> pointFromPercent(~startPoint=positionPoints.minX, ~length=(positionPoints.maxX -. positionPoints.minX), ~isX=true)
-      , 2);
-  | None => "-50"
+      |> pointFromPercent(~startPoint=positionPoints.minX, ~length=(positionPoints.maxX -. positionPoints.minX), ~isX=true);
+  | None => -50.
   };
-
-  let axisY = percentOfData(
-                ~data=(y < 0. ? 
-                  (10. -. Js.Math.abs_float(y))
-                  : (y +. 10.)), 
-                ~maxValue=yValueLength
-              ) 
-              |> pointFromPercent(~startPoint=positionPoints.minY, ~length=(positionPoints.maxY -. positionPoints.minY))
-              |> Js.Float.toString;
-  point ++ (axisX ++ ",") ++ (axisY ++ "") ++ " ";
+  let axisY = percentOfData(~data=(y < 0. ? (10. -. Js.Math.abs_float(y)): (y +. 10.)), ~maxValue=yValueLength) 
+          |> pointFromPercent(~startPoint=positionPoints.minY, ~length=(positionPoints.maxY -. positionPoints.minY));
+  point ++ (floatToPrecision(axisX, 2) ++ ",") ++ (floatToPrecision(axisY, 2) ++ "") ++ " ";
 };
 
 let allCategory = (~datas:list(categoryGraph)) => {
@@ -61,8 +54,8 @@ let make = (
       let point = 
         calculatePoint(~y=data.point.y, ~title=data.title, ~allCategory, ~positionPoints=boundary.positionPoints, ~yValueLength, "") 
         |> Js.String.split(",");
-      [|data.point.y |> Js.Float.toString, 
-        data.title, 
+      [|data.title, 
+        data.point.y |> Js.Float.toString, 
         randomX(point[0], randomDistance), 
         point[1],
         data.color
@@ -70,23 +63,19 @@ let make = (
     }) |> Array.of_list;
   
   let pointElements = tooltipDatas |> Array.to_list |> List.mapi((i, data) => {
-      <circle 
-        key=("circle-"++(i |> string_of_int)++"-"++svgId)
-        cx=data[2]
-        cy=data[3]
-        r=(data[4] !== "gray" ? "6" : "3")
-        fill=data[4]
-        stroke=(data[4] !== "gray" ? "white" : "none")
-      />
+
+      let key = ("circle-" ++ (i |> string_of_int) ++ "-" ++ svgId);
+      <circle key cx=data[2] cy=data[3] r=(data[4] !== "gray" ? "6" : "3") fill=data[4] stroke=(data[4] !== "gray" ? "white" : "none") />
+      
   }) |> Array.of_list |> array;
 
-  let titles:array(string) = datas |> List.map((data:categoryGraph) => data.title) |> Array.of_list;
+  let allTitleOfData:array(string) = datas |> List.map((data:categoryGraph) => data.title) |> Array.of_list;
 
   let onMouseEvent = (e) => 
       showTooltip(
         boundary.positionPoints.minX, 
         boundary.positionPoints.maxX, 
-        e, titles, [|[||]|], tooltipDatas, 
+        e, allTitleOfData, [|[||]|], tooltipDatas, 
         tooltipId, svgId, circleId, 
         tooltip.xTitle, tooltip.yTitle, "category-graph");
   <div className="svg-category">
@@ -99,12 +88,12 @@ let make = (
       onMouseEnter=onMouseEvent
       onMouseLeave=(_ => hideTooltip(tooltipId))
     >
-      {!disabledElements.guildLines ? drawGuildLineX(~lineAmount=20, ~positionPoints=boundary.positionPoints, ~strokeColor="black") : null}
+      {!disabledElements.guildLines ? drawGuildLineAxisX(~lineAmount=20, ~positionPoints=boundary.positionPoints, ~strokeColor="black") : null}
       <line 
-        x1=floatToPrecision(boundary.positionPoints.minX, 2)
-        y1=floatToPrecision(boundary.positionPoints.minY, 2)
-        x2=floatToPrecision(boundary.positionPoints.minX, 2)
-        y2=floatToPrecision(boundary.positionPoints.maxY, 2)
+        x1={floatToPrecision(boundary.positionPoints.minX, 2)}
+        y1={floatToPrecision(boundary.positionPoints.minY, 2)}
+        x2={floatToPrecision(boundary.positionPoints.minX, 2)}
+        y2={floatToPrecision(boundary.positionPoints.maxY, 2)}
         strokeWidth="2"
         stroke=colorElements.axisLine
       />
@@ -117,7 +106,7 @@ let make = (
         stroke=colorElements.axisLine
       />
       <text 
-        x=floatToPrecision(boundary.positionPoints.minX -. 20., 2)
+        x={floatToPrecision(boundary.positionPoints.minX -. 20., 2)}
         y=(((boundary.positionPoints.maxY -. boundary.positionPoints.minY) /. 2. +. boundary.positionPoints.minY +. 7.) |> Js.Float.toString)
         fill=colorElements.font
         fontSize=(floatToPrecision(fontSize, 2)++"px")
@@ -126,38 +115,30 @@ let make = (
         {string(titleYAxis)}
       </text>
       {drawYvalues(~yValueLength, ~yLength, ~boundary, ~floatDigit, ~colorElements, ~fontSize)}
-      {
-        <g>
-          {
-            allCategory |> List.mapi((i, spec) => {
-              let x = percentOfData(~data=(i + 1 |> float_of_int), ~maxValue=(List.length(allCategory) |> float_of_int))
-                      |> pointFromPercent(~startPoint=boundary.positionPoints.minX, ~length=(boundary.positionPoints.maxX -. boundary.positionPoints.minX), ~isX=true);
-              <g key=("g-"++(i |> string_of_int)++"-"++svgId)>
-                <text 
-                  x=(floatToPrecision(x -. ((Js.String.length(spec) |> float_of_int) *. (fontSize /. 3.5)), 2))
-                  y=(floatToPrecision(
-                    boundary.positionPoints.maxY +. 
-                    (((i mod 2) === 0 && waveXString) ? 60. : 30.)
-                    , 2))
-                  fill=colorElements.font
-                  fontSize=(floatToPrecision(fontSize, 2)++"px")
-                >
-                  {string(spec)}
-                </text>
-                <line 
-                  x1={floatToPrecision(x, 2)}
-                  y1={floatToPrecision(boundary.positionPoints.minY, 2)}
-                  x2={floatToPrecision(x, 2)}
-                  y2={floatToPrecision(boundary.positionPoints.maxY, 2)}
-                  strokeWidth="0.5" 
-                  stroke=colorElements.axisLine
-                />
-              </g>
-            }) |> Array.of_list |> array
-          }
-          {pointElements}
-        </g>
-      }
+      <g>
+        {
+          allCategory |> List.mapi((i, spec) => {
+            let x = percentOfData(~data=(i + 1 |> float_of_int), ~maxValue=(List.length(allCategory) |> float_of_int))
+                    |> pointFromPercent(~startPoint=boundary.positionPoints.minX, ~length=(boundary.positionPoints.maxX -. boundary.positionPoints.minX), ~isX=true);
+            let axisXText = floatToPrecision(x -. ((Js.String.length(spec) |> float_of_int) *. (fontSize /. 3.5)), 2);
+            let axisYText = floatToPrecision(boundary.positionPoints.maxY +. (((i mod 2) === 0 && waveXString) ? 60. : 30.), 2);
+            <g key=("g-"++(i |> string_of_int)++"-"++svgId)>
+              <text x=axisXText y=axisYText fill=colorElements.font fontSize=(floatToPrecision(fontSize, 2)++"px")>
+                {string(spec)}
+              </text>
+              <line 
+                x1={floatToPrecision(x, 2)}
+                y1={floatToPrecision(boundary.positionPoints.minY, 2)}
+                x2={floatToPrecision(x, 2)}
+                y2={floatToPrecision(boundary.positionPoints.maxY, 2)}
+                strokeWidth="0.5" 
+                stroke=colorElements.axisLine
+              />
+            </g>
+          }) |> Array.of_list |> array
+        }
+        {pointElements}
+      </g>
     </svg>
     <div 
       id=tooltipId
